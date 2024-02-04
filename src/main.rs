@@ -2,6 +2,7 @@ use diesel::sqlite::SqliteConnection;
 use diesel::prelude::*;
 use dotenvy::dotenv;
 use std::env;
+use diesel;
 
 use crate::models::{Post, NewPost};
 
@@ -13,7 +14,7 @@ fn main() {
 
     create_post(connection, "First Post", "Hello! This is the first ever blog post!");
 
-    println!("Hello, world!");
+    println!("Done, check DB");
 }
 
 
@@ -31,7 +32,11 @@ pub fn create_post(connection: &mut SqliteConnection, title: &str, body: &str) {
     let new_post = NewPost { title, body };
 
     diesel::insert_into(posts::table)
-        .values(&new_post)
+        .values((
+                    &new_post,
+                    posts::date.eq(diesel::dsl::now), // <- HOW ARE THESE TWO AUTROMATICALLY
+                    posts::published.eq(false)        // <- RESOLVED IN THE DEMO???
+                ))
         .returning(Post::as_returning())
         .get_result(connection)
         .expect("Error saving new post");
@@ -41,7 +46,7 @@ pub fn list_posts(connection: &mut SqliteConnection) {
 
     use self::schema::posts::dsl::*;
     let results = posts
-        .select(models::Post::as_select())
+        .select(models::Post::as_returning())
         .load(connection)
         .expect("Error Loading Posts");
 

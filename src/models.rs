@@ -1,12 +1,12 @@
 use diesel::prelude::*;
-use time::PrimitiveDateTime;
+use chrono::NaiveDateTime;
 
 #[derive(Queryable,Selectable)]
 #[diesel(table_name = crate::schema::posts)]
 #[diesel(check_for_backend(diesel::sqlite::Sqlite))]
 pub struct Post {
     pub id: i32,
-    pub date: PrimitiveDateTime,
+    pub date: NaiveDateTime,
     pub title: String,
     pub body: String,
     pub published: bool,
