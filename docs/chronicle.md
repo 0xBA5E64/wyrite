@@ -1,0 +1,66 @@
+I keep trying to figure out how to build my basic blog but, keep falling into potholes, this document attempts to outline my experience trying to build my first ever "dynamic" website.
+
+I already have a long history of hobbyist *static* web-development, but have just never managed to make the jump to anything dealing with a proper backend.
+
+I've wanted to have a blog of some sorts for a while now, but I've never much of a fan of Wordpress, or PHP, or even just databases quite frankly.
+
+I'm kind of hesitant about using a database in general because I just, don't, understand them; I feel like they're over-complicated and introduce a sudden external dependency for your application I suddenly have to also worry about. As such, I originally wanted to try doing a "flat-file CRM" that stored/read all the blog posts as just .md files in a folder I could edit. But, as time goes on, I've kind of been drawn to just, do a database-based solution, if for no better reason than to just try to better understand how databases work, and how programming for databases work.
+
+I'd long been thinking about finding a project to do Rust, both because I wanted to learn Rust, and I thought It'd be cool to build a web-app that's really low-level and performant. I was also hoping the compiler would hopefully whip me into keeping to best-practices while exploring this quite dangerous field of programming.
+
+So, okay, Building a basic Blog-platform, in Rust, using a database.
+
+Having ruminated over this basic premise for quite some time, I came up with a rough roadmap for how I'd likely want to approach developing it:
+- Firstly: Start off by building it all as a simple, offline CLI-application for creating, viewing, editing and deleting blog-posts. This lets me figure out how I'll be doing all the database interaction with as little technical overhead as I can hope for.
+- Once that's done, hook this up with a web-framework like Actix or Axum, figure out some basic templating, and bam! A basic blog! Put it behind a reverse-proxy and it's good to go!
+- Lastly, as a stretch-goal; Try turning the app into an API, and build the web-frontend as a seperate web-application with something like Vue, perhaps Nuxt?
+
+in which case, I need to focus on integrating with a database first...
+
+In my extremely limited experience building any sort of interactive web app, I've only really ever worked with Django, which is a web-framework for Python, that includes a lot of niceities by default. In the case of "storing data", it provides a really robust "ORM" - a thingy that abstracts away the need to interract with the database directly and, instead lets you interact with the database as if they were just objects in code
+
+These objects are defined as models in code, and so, for instance, if you had a BlogPost model, you could get all your blog-posts by doing:
+```py
+from app.models.blogPosts import BlogPosts
+
+blog_posts = BlogPosts.objects.all()
+```
+What's especially cool about it is that you can even filter things super easily and ergonomically like:
+```py
+# In this example, imagine certain blog-posts are "introductions", and so have "Introduc"+(ing|tion) in the title
+# We can filter objects by their title-field by just doing title="something", but, even better, by using two underscores-
+# -(__) we can access certain filtering "functions", such as "__contains", which checks if the string provided is somewhere in the given field.
+# This can additionally be made case-insensitive via __icontains
+intro_blog_posts = BlogPosts.objects.filter(title__icontains="introduc")
+```
+Integrating directly with SQL is probably more flexible but, I've never really understood SQL, and it's an additional language cluttering up my codebase.Therefore, I thought, to keep things from being needlessly complicated, I should spring to use an ORM in this app as well, ...right? Well, maybe.
+
+Thing is, the one ORM I found that was recommended for Rust is called diesel.rs. And, it felt a bit... lacking.
+
+For one, in the "Getting Started" guide, explaining how to set up a new model for you in your program, you basically have to define it thrice;
+- Once in SQL, manually, as up/down migrations (wait, isn't this exactly what I was trying to avoid to begin with?)
+- Next as a a "schema", which defines your SQL table fields in some sort of rust-sql-diesel limbo
+- Lastly; as a "model", which is the actual Rust struct (object) it's gonna be mapped to.
+Oh, and as if that wasn't tedious enough, you have to manually assign what type each field is supposed to map to, from the database, to the object. 
+
+Okay so, this feels, weird, right? Like, that's a lot of manual labour that needs to be done, which feels like it could/should be abstracted away, right?
+And, to be frank, some it apparently can be;
+- The SQL migrations can apparently be auto-generated from the schema by doing diesel migration generate --diff-schema, but this is listed as an alternative method, not a primary one.
+- Similarly. the models can alledgedly be auto-generated as-well by a third-party extension called "dsync", but again, that raises the question of; then why is it not built in to begin with?
+
+These questions may come of as rhetorical, but they're not; I genuinely wanted answers. And so, I went looking. After reading a bunch of Reddit-posts, Stack-Overflow answers, and HackerNews comments, I seem to've found some answers, albeit indirectly:
+
+- The general consensus by experienced devs appear to be to stay away from ORM's, as the alluring ease-of-use they alledge to offer usually just ends up being a headache as you begin to want to do more advanced queries and database operations. Ergo; ORM's are not worth the hassle they cause.
+- Diesel therefore tries to somewhat circumvent this, by stripping away much of the abstractions ORM's usually offer, and forcing you as a developer to handle much of it manually, but still offering some of the niceities of an ORM once fully set-up. Ergo; Diesel.rs is not necessarily an ORM in the traditional manner, but rather a compromise of sorts, born from trying to resolve some of their shortcomings
+- "If you want to build something with database-integration in Rust, use SQLx, it's an awesome universal library for integrating with most databases, and async!"
+
+...so, in the end, unless I wanna spend the time to set up diesel.rs, I guess using SQLx would be the "better" option. There are two problems however:
+- I still don't know SQL.
+- I have tried and failed, dozens of times before, to grasp the what and how of async programming.
+
+Still, apparently, if I am trying to build a web-service, it's best practice to be async anyhow, so I guess I have to learn that too now.
+
+What I know is, for async code to work in Rust, it needs a "runtime". The most popular of which is tokio.rs
+As a small light at the end of the thunnel though, tokio.rs also offers it's own web-framework to work with; Axom, so I guess that part of the stack falls into place nicely too now.
+
+Bad news is, reading up briefly on Tokio, it appears to make Rust variable lifetimes even more of a nightmare to manage. The "good news" is, if I can learn to make it in Rust, it means I'll be learning to do it right, since Rust will force me to write it in a safe manner, whereas this sort of thing is usually extremely error-prone and risky.
