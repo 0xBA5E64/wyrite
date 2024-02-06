@@ -1,23 +1,21 @@
-I keep trying to figure out how to build my basic blog but, keep falling into potholes, this document attempts to outline my experience trying to build my first ever "dynamic" website.
+I keep trying to figure out how to build my basic blog but, as I've kept falling into potholes, I've decided to chronicle my experience in this document the process of building my first ever "dynamic" website, in hopes it may one day be a useful resource for other beginners, or, a reference for the kinds of things beginners may be confused of.
 
-I already have a long history of hobbyist *static* web-development, but have just never managed to make the jump to anything dealing with a proper backend.
-
-I've wanted to have a blog of some sorts for a while now, but I've never much of a fan of Wordpress, or PHP, or even just databases quite frankly.
+I already have a long history of hobbyist *static* web-development, but have just never managed to make the jump towards building anything that interacts with a backend of some sort, alhtough not for a lack of trying. I've wanted to have a blog of some sorts for a while now, but I've never much of a fan of Wordpress, or PHP, or even just databases quite frankly.
 
 I'm kind of hesitant about using a database in general because I just, don't, understand them; I feel like they're over-complicated and introduce a sudden external dependency for your application I suddenly have to also worry about. As such, I originally wanted to try doing a "flat-file CRM" that stored/read all the blog posts as just .md files in a folder I could edit. But, as time goes on, I've kind of been drawn to just, do a database-based solution, if for no better reason than to just try to better understand how databases work, and how programming for databases work.
 
 I'd long been thinking about finding a project to do Rust, both because I wanted to learn Rust, and I thought It'd be cool to build a web-app that's really low-level and performant. I was also hoping the compiler would hopefully whip me into keeping to best-practices while exploring this quite dangerous field of programming.
 
-So, okay, Building a basic Blog-platform, in Rust, using a database.
+So, okay, brief project descriptor: Building a basic Blog backend, in Rust, using a Database.
 
-Having ruminated over this basic premise for quite some time, I came up with a rough roadmap for how I'd likely want to approach developing it:
+Having ruminated over this basic premise for quite some time, I've come up with a rough roadmap for how I'd likely want to approach developing something like this:
 - Firstly: Start off by building it all as a simple, offline CLI-application for creating, viewing, editing and deleting blog-posts. This lets me figure out how I'll be doing all the database interaction with as little technical overhead as I can hope for.
-- Once that's done, hook this up with a web-framework like Actix or Axum, figure out some basic templating, and bam! A basic blog! Put it behind a reverse-proxy and it's good to go!
+- Once that's done; hook this up with a web-framework like Actix or Axum. Figure out some basic templating, and bam! A basic blog! Put it behind a reverse-proxy and it should be good to go!
 - Lastly, as a stretch-goal; Try turning the app into an API, and build the web-frontend as a seperate web-application with something like Vue, perhaps Nuxt?
 
-in which case, I need to focus on integrating with a database first...
+Thus, if this is the outline I'm to follow, the first step will be to figure out database interactions.
 
-In my extremely limited experience building any sort of interactive web app, I've only really ever worked with Django, which is a web-framework for Python, that includes a lot of niceities by default. In the case of "storing data", it provides a really robust "ORM" - a thingy that abstracts away the need to interract with the database directly and, instead lets you interact with the database as if they were just objects in code
+In my extremely limited experience building any sort of interactive web app, I've only really ever worked with Django (see [dyablog](https://github.com/0xBA5E64/dyablog)), which is a web-framework for Python that includes a lot of niceities by default. In the case of "storing data", it provides a really robust "ORM" - a thingy that abstracts away the need to interact with the database directly and, instead lets you interact with the database as if they were just objects in code
 
 These objects are defined as models in code, and so, for instance, if you had a BlogPost model, you could get all your blog-posts by doing:
 ```py
@@ -64,3 +62,26 @@ What I know is, for async code to work in Rust, it needs a "runtime". The most p
 As a small light at the end of the thunnel though, tokio.rs also offers it's own web-framework to work with; Axom, so I guess that part of the stack falls into place nicely too now.
 
 Bad news is, reading up briefly on Tokio, it appears to make Rust variable lifetimes even more of a nightmare to manage. The "good news" is, if I can learn to make it in Rust, it means I'll be learning to do it right, since Rust will force me to write it in a safe manner, whereas this sort of thing is usually extremely error-prone and risky.
+
+
+# Brief TL;DR outline
+- I want to have a blog.
+- I don't like pre-existing solutions; too complex & confusing. I could do with a good code-project anyhow.
+  - Part of said confusion is Databases: They're confusing!
+    - An additional depencency to worry about; the app is no longer self-contained.
+    - Introduce an additional language to worry about (SQL).
+    - Additional security risks! SQL-Injection seems like a nightmare to watertighten.
+- I explored flat-file CMS's.
+  - Am not too pleased with that eco-system either, although they do feel better than their Database-driven counterparts.
+  - Static page generators are also a thing, but, it would be cool to be able to edit things on-the-fly...
+- I want to try to build a blog.
+  - Flat-file sounds nice, static-site gen?
+  - Despite displeasure; learning how to interact with databases is honestly probably a good idea.
+  - As would learning Rust!
+- Use an ORM?
+  - Internet: Don't use an ORM.
+- Database in Rust? rusqlite? SQLx?
+  - rusqulite: it works, is basic (:+1:),
+  - SQLx: community favorite!
+    - SQLx? Async. Async? Tokio.
+- So... Rust, SQLx, Tokio + Axom.
