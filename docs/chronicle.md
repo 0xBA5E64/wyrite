@@ -85,3 +85,11 @@ Bad news is, reading up briefly on Tokio, it appears to make Rust variable lifet
   - SQLx: community favorite!
     - SQLx? Async. Async? Tokio.
 - So... Rust, SQLx, Tokio + Axom.
+
+# diesel.rs vs SQLx
+
+I've now tried using both diesel.rs & SQLx to interface with databases from Rust, and I have thus formed som opinions:
+
+diesel.rs put me off as a beginner; being an ORM; I was expecting it to help offload much of the inital setup needed to get up and running with a database. Instead, it just felt like it complicated things further. My database/model had to be defined thrice, manually (see previous section), and much of the user experience in general just felt very manual. Because of this, I decided to give SQLx a shot; appearing to be a community darling of sorts, it alledgedly offered simpler access to raw SQL queries, that could still be typed-checked to validate validity. Despite this, I felt much of what I ended up doing for SQLx as being redundant from how diesel.rs too operated, yet somehow even more confusing and poorly documented. Moreover, SQLx also wants to manage database migrations for me, but does this solely through SQL apparenly, using an additional cli-tool called sqlx-sli.
+
+...All in all, I'm not sure what I think is better, though I'm currently learning towards returning to diesel.rs, if for no other reason than that it's syncronous by default so, simple, to get started with. Still, SQLx, wasn't too bad either, so I don't know. Using both did certainly feel like it gave me a greater understanding of how database-interactions *look* and *feel* in Rust though, and, perhaps wider programming as well. Again, this is all new to me.
