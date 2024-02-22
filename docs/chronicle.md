@@ -93,3 +93,20 @@ I've now tried using both diesel.rs & SQLx to interface with databases from Rust
 diesel.rs put me off as a beginner; being an ORM; I was expecting it to help offload much of the inital setup needed to get up and running with a database. Instead, it just felt like it complicated things further. My database/model had to be defined thrice, manually (see previous section), and much of the user experience in general just felt very manual. Because of this, I decided to give SQLx a shot; appearing to be a community darling of sorts, it alledgedly offered simpler access to raw SQL queries, that could still be typed-checked to validate validity. Despite this, I felt much of what I ended up doing for SQLx as being redundant from how diesel.rs too operated, yet somehow even more confusing and poorly documented. Moreover, SQLx also wants to manage database migrations for me, but does this solely through SQL apparenly, using an additional cli-tool called sqlx-sli.
 
 ...All in all, I'm not sure what I think is better, though I'm currently learning towards returning to diesel.rs, if for no other reason than that it's syncronous by default so, simple, to get started with. Still, SQLx, wasn't too bad either, so I don't know. Using both did certainly feel like it gave me a greater understanding of how database-interactions *look* and *feel* in Rust though, and, perhaps wider programming as well. Again, this is all new to me.
+
+
+# Lacking documentation
+
+Maybe it's just me being a rookie to this, but I found documentation for a lot of what I'm trying to do to be severely lacking. SQLx feels like it barely has any documentation to speak of, whereas diesel.rs, which to it's credit *does* have a getting-started guide, also feels severely lacking, all things considered.
+
+Take for instance, my current perdicament; I want to build a web-app/api that fetches data from an API upon requests and outputs this to the user. The way I imagine this would be done is by having some sort of web-framework set up to do "routing" or whatever, and register a function to a certain path, such as, let's say; "/articles". Upon a visit, said web-framework runs the function, grabs the output, and sends it away to the user, neat, right?
+
+...right? Because, that's actually not a rhetorical, I don't know if that's the recommended way of going about something like this, or if I should be fundementally structuring this some other way; am I shooting myself in the foot by doing things like this, or should I 
+
+Whatever; this is a research/learning project, after all! It's good to run into potential issues, and learn from potential mistakes. So let's just start off building it however I first imagined doing it.
+
+But then, we run into some immediate roadblocks; first of all, like I've mentioned previously, a lot of the recommended tools people mention for doing something like this are "async", which I don't understand, and have so far had no luck with teaching myself.
+
+Secondly; SQLx - While perusing the paper-thin introduction to this framework featured in it's README, something almost immediately stood out to me; `___PoolOptions`... oh, yeah, it's probably a good idea to have one of those, right, cause starting a new database connection with each request is probably gonna cause slowdown or something of the sort. I could like, initiate one alongside the web-server, and pass individual connections to the different "request handlers" (I think they're called? The functions that give back an output for the server to serve)
+
+So, here's an example where, the documentation feels like it's pushing towards doing things in a certain way. In this case; setting up a re-usable thread-pool for your app instead of creating & dropping connections nilly-willy per call.  which is probably smart but, I'm then also not sure if I'm missing out on *other* potential things I should be doing differently too.
