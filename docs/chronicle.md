@@ -110,3 +110,38 @@ But even then, I run into some immediate roadblocks; First of all, like I've men
 Secondly, and getting back to my original point, let's look at SQLx in this context: While perusing the paper-thin introduction to this framework featured in it's README, something almost immediately stood out to me; `___PoolOptions`... oh, yeah. It's probably a good idea to have one of those, right, cause starting a new database connection with each request is probably gonna cause slowdown or something of the sort. I could like, initiate one alongside the web-server, and pass individual connections to the different "request handlers" (I think they're called? The functions that give back an output for the server to serve)
 
 So, here's an example where, the documentation feels like it's pushing towards doing things in a certain way. In this case; setting up a re-usable thread-pool for your app instead of creating & dropping connections nilly-willy per call. This is probably smart but, I'm suddenlt also not sure if I'm missing out on *other* potential design considerations I should be having in mind as well.
+
+
+# SQL Databases
+
+I have never understood databases; what value one might derive from storing data in a seperate application from the one you're actually running, though some sort of "standardized" mechanishm, when each and every application handles data differenly.
+
+## SQL Syntax
+
+SQL too, has always seemed like a confusingly verbose "language" that never quite satisfied my desire for systematic syntax, instead opting for some weird hybrid that looks part code, part English. Take the following query as an example:
+
+```
+CREATE USER foo2@test IDENTIFIED BY 'password';
+```
+Reading it it's pretty easy to understand what's going on; you're creating a user "foo2" that's "at test", with a password of "password".
+All in all, ignoring whatever "@test" is, this is pretty simple to read, and barring the monospace typeface and all-caps syntax, I'm pretty sure any engish speaker off the street could tell you what this is supposed to do on their own.
+
+Things get trickier however as soon as I try to decipher the syntax; In a domain like computing where spaces are used to destinguish between distinct parts of a command or statement, whys are `IDENTIFIED` and `BY` separate? For that matter, why is the verb `IDENTIFIED` used to specify a password, a concept that's much more commonly associated with "Authentication"?
+
+Knowing `@test` is specifying the foo2 user as only being authorized to connect from the `test` host, Were I to chance the syntax of something like this, I'd probably want it written something more like:
+```
+USER CREATE foo2 AUTH HOST 'test' AUTH PASSWORD 'password';
+```
+We want to create a user, so we call on CREATE from USER, then we pass a username, and any additional parameters are optional statements to further configure the user, such as, in this case, setting authentication options for what host the user is allowed to connect from, and a password for them to authenticate with.
+
+
+# Inserting data into a database
+
+Similarly, I've long wondered how one is supposed to input data into an SQL database. Now, this might seem like something that'd be utterly obvious for even a beginner to simply look up, and sure enough, search and you will find answers:
+```
+INSERT INTO customers (name, adress, balance) VALUES ("John Doe", "Local-street, 127.0.0.1", "39.99");
+```
+Simple enough, right? And yea, honestly, I think it is.
+But what if I instead wanted to say, insert a string with a quotation-mark in it in one of the fields? Sure, we might able to escape it first, so what about a line-break; perhaps we want the adress to be split across multiple lines, what then? Worse yet, what if I wanted to store *arbitrary __binary__ data* in any of these fields? Say, a profile *image*? How am I supposed to insert that? I guess I could maybe encode it into something like `base64`, but that feels *mighty* hacky, and from what I understand, databases *are* indeed supposed to be able to have "binary blob" columns, so how am I supposed to interact with those?
+
+Well, as I began looking though SQLx's documentation, I found my answer: **"parameterized queries"**, which is to define your SQL *query* with *variables* in place of values, and passing the data in seperately though your database interface. Neat! No, really, that sounds perfectly sound to me; write the SQL almost like a shipping label, and then just attach the data. This also apparently has the added benefit of preventing SQL injec- ...wait. I-is that *seriously* how SQL-injection vulnerabilities happen!? Do people seriously just stick user data straight into the SQL query!? That's... at all, acceptable!?
