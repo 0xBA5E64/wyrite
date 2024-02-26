@@ -88,20 +88,22 @@ Bad news is, reading up briefly on Tokio, it appears to make Rust variable lifet
 
 # diesel.rs vs SQLx
 
-I've now tried using both diesel.rs & SQLx to interface with databases from Rust, and I have thus formed som opinions:
+I've now tried using both diesel.rs & SQLx to interface with databases from Rust, and I have thus formed some opinions:
 
-diesel.rs put me off as a beginner; being an ORM; I was expecting it to help offload much of the inital setup needed to get up and running with a database. Instead, it just felt like it complicated things further. My database/model had to be defined thrice, manually (see previous section), and much of the user experience in general just felt very manual. Because of this, I decided to give SQLx a shot; appearing to be a community darling of sorts, it alledgedly offered simpler access to raw SQL queries, that could still be typed-checked to validate validity. Despite this, I felt much of what I ended up doing for SQLx as being redundant from how diesel.rs too operated, yet somehow even more confusing and poorly documented. Moreover, SQLx also wants to manage database migrations for me, but does this solely through SQL apparenly, using an additional cli-tool called sqlx-sli.
+**diesel.rs** put me off as a beginner; being an ORM; I was expecting it to help offload much of the inital setup needed to get up and running with a database. Instead, it just felt like it complicated things further. My database/model had to be defined thrice, manually (see previous section), and much of the user experience in general just felt very manual.
+
+It was at least partly because of this that I decided to also give **SQLx** a shot; appearing to be a community darling of sorts, it alledgedly offered simpler access to "raw" SQL-queries, that could also be typed-checked to validate validity. Despite this, I felt much of what I ended up doing for SQLx as being redundant from how diesel.rs too operated, yet somehow even more confusing and poorly documented. Moreover, SQLx also wants to manage database migrations for me, but does this solely through SQL apparenly, using an additional cli-tool called sqlx-sli.
 
 ...All in all, I'm not sure what I think is better, though I'm currently learning towards returning to diesel.rs, if for no other reason than that it's syncronous by default so, simple, to get started with. Still, SQLx, wasn't too bad either, so I don't know. Using both did certainly feel like it gave me a greater understanding of how database-interactions *look* and *feel* in Rust though, and, perhaps wider programming as well. Again, this is all new to me.
 
 
-# Lacking documentation
+## Lacking documentation
 
-Perhapts it's just my lack of experience navigating these things, but I've found that documentation for a lot of what I'm trying to do, and even the tools to do it to be severely lacking: SQLx feels like it barely has any documentation to speak of, whereas diesel.rs, which to it's credit *does* have a getting-started guide, also feels severely lacking for doing anything beyond re-creating the creators same sample-project.
+Perhaps it's just my lack of experience navigating these things, but I've found that documentation for a lot of what I'm trying to do, and even the tools to do it to be severely lacking: SQLx feels like it barely has any documentation to speak of, whereas diesel.rs, which to it's credit *does* have a getting-started guide, feels severely lacking for helping the user doing anything beyond re-creating the creators sample-project.
 
-I want to build a web-app/api that fetches data from an API upon requests and outputs this to the user. The way I imagine this would be done is by having some sort of web-framework set up to listen and respond on a port for HTTP requests based on path, request-type, user-agent etc (do "routing" or whatever). I'd register a function to a certain path (which I believe is then on known as an "request handler"), such as, let's say; "/articles" and, upon a visit, said web-framework runs the function, grabs the output, and sends it away to the user, neat, right?
+**I want to build a web-app/api that fetches data from an API upon requests and outputs this to the user.** The way I imagine this would be done is by having some sort of web-framework set up to listen and respond on a port for HTTP requests based on path, request-type, user-agent etc (do "routing" or whatever). I'd register a function to a certain path *(which I believe is then on known as an "request handler"?)*, such as, let's say; "/articles" and, upon a visit, said web-framework runs the function, grabs the output, and sends it away to the user, neat, right?
 
-...right? Because, that's actually not a rhetorical. I don't know if that's the recommended way of going about something like this, or if I should be fundementally structuring this some other way; am I shooting myself in the foot by doing things like this, or should I -
+*...right? Because, that's actually not a rhetorical. I don't know if that's the recommended way of going about something like this, or if I should be fundementally structuring this some other way; am I shooting myself in the foot by doing things like this, or should I -*
 
 whatever... This is supposed to be a research/learning project after all! It's good to run into issues, and learn from such mistakes. There's no risk to be concerned about since it's not being used for anything serious yet. So let's just start off building it however I first imagined doing it.
 
