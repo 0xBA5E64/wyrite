@@ -120,7 +120,7 @@ I have never understood databases; what value one might derive from storing data
 
 SQL too, has always seemed like a confusingly verbose "language" that never quite satisfied my desire for systematic syntax, instead opting for some weird hybrid that looks part code, part English. Take the following query as an example:
 
-```
+```SQL
 CREATE USER foo2@test IDENTIFIED BY 'password';
 ```
 Reading it it's pretty easy to understand what's going on; you're creating a user "foo2" that's "at test", with a password of "password".
@@ -135,10 +135,10 @@ USER CREATE foo2 AUTH HOST 'test' AUTH PASSWORD 'password';
 We want to create a user, so we call on CREATE from USER, then we pass a username, and any additional parameters are optional statements to further configure the user, such as, in this case, setting authentication options for what host the user is allowed to connect from, and a password for them to authenticate with.
 
 
-# Inserting data into a database
+## Inserting data into a database, safely?
 
 Similarly, I've long wondered how one is supposed to input data into an SQL database. Now, this might seem like something that'd be utterly obvious for even a beginner to simply look up, and sure enough, search and you will find answers:
-```
+```SQL
 INSERT INTO customers (name, adress, balance) VALUES ("John Doe", "Local-street, 127.0.0.1", "39.99");
 ```
 Simple enough, right? And yea, honestly, I think it is.
