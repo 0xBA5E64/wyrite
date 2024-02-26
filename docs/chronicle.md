@@ -101,22 +101,19 @@ It was at least partly because of this that I decided to also give **SQLx** a sh
 
 Perhaps it's just my lack of experience navigating these things, but I've found that documentation for a lot of what I'm trying to do, and even the tools to do it to be severely lacking: SQLx feels like it barely has any documentation to speak of, whereas diesel.rs, which to it's credit *does* have a getting-started guide, feels severely lacking for helping the user doing anything beyond re-creating the creators sample-project.
 
-**I want to build a web-app/api that fetches data from an API upon requests and outputs this to the user.** The way I imagine this would be done is by having some sort of web-framework set up to listen and respond on a port for HTTP requests based on path, request-type, user-agent etc (do "routing" or whatever). I'd register a function to a certain path *(which I believe is then on known as an "request handler"?)*, such as, let's say; "/articles" and, upon a visit, said web-framework runs the function, grabs the output, and sends it away to the user, neat, right?
+To reiterate: **I want to build a web-app/api that fetches data from an API upon requests and outputs this to the user.** The way I imagine this would be done is by having some sort of web-framework set up to listen and respond on a port for HTTP requests based on path, request-type, user-agent etc (do "routing" or whatever). I'd register a function to a certain path *(which I believe is then on known as an "request handler"?)* that queries a database, populates and returns a html template based on the data. This function is attached to, let's say; `/articles` and, upon visit, said web-framework runs the function, grabs it's output, and sends it away to the user, neat, right?
 
-*...right? Because, that's actually not a rhetorical. I don't know if that's the recommended way of going about something like this, or if I should be fundementally structuring this some other way; am I shooting myself in the foot by doing things like this, or should I -*
+*...right? Because, that's actually not a rhetorical. I don't know if that's the recommended way of going about something like this, or if I should be fundementally structuring this some other way; am I shooting myself in the foot by doing things like this, or should I -* **Whatever...** This is supposed to be a research/learning project after all! It's good to run into issues, and learn from such mistakes. There's no risk to be concerned about since it's not being used for anything serious yet. So let's just start off building it however I first imagined doing it. But even then, I run into some immediate roadblocks;
 
-whatever... This is supposed to be a research/learning project after all! It's good to run into issues, and learn from such mistakes. There's no risk to be concerned about since it's not being used for anything serious yet. So let's just start off building it however I first imagined doing it.
-
-But even then, I run into some immediate roadblocks; First of all, like I've mentioned previously, a lot of the recommended tools people mention for doing something like this are "async", which is a coding pattern I don't really understand, and have so far had no luck with teaching myself.
-
-Secondly, and getting back to my original point, let's look at SQLx in this context: While perusing the paper-thin introduction to this framework featured in it's README, something almost immediately stood out to me; `___PoolOptions`... oh, yeah. It's probably a good idea to have one of those, right, cause starting a new database connection with each request is probably gonna cause slowdown or something of the sort. I could like, initiate one alongside the web-server, and pass individual connections to the different "request handlers" (I think they're called? The functions that give back an output for the server to serve)
+While perusing the paper-thin introduction to SQLx in it's README, something almost immediately stood out to me; `___PoolOptions`... oh, yeah. It's probably a good idea to have one of those, right, cause starting a new database connection with each request is probably gonna cause slowdown or something of the sort. I could like, initiate one alongside the web-server, and pass individual connections to the different "request handlers" (I think they're called? The functions that give back an output for the server to serve)
 
 So, here's an example where, the documentation feels like it's pushing towards doing things in a certain way. In this case; setting up a re-usable thread-pool for your app instead of creating & dropping connections nilly-willy per call. This is probably smart but, I'm suddenlt also not sure if I'm missing out on *other* potential design considerations I should be having in mind as well.
 
+Secondly, like I've mentioned previously, a lot of the recommended tools people mention for doing something like this are `async`, which is a coding pattern I still don't really understand, and have so far had no luck with teaching myself.
 
 # SQL Databases
 
-I have never understood databases; what value one might derive from storing data in a seperate application from the one you're actually running, though some sort of "standardized" mechanishm, when each and every application handles data differenly.
+I have never understood databases; what value one might derive from storing data in a seperate application from the one you're actually running, though some sort of "standardized" mechanism, when each and every application handles data differenly.
 
 ## SQL Syntax
 
@@ -125,12 +122,12 @@ SQL too, has always seemed like a confusingly verbose "language" that never quit
 ```SQL
 CREATE USER foo2@test IDENTIFIED BY 'password';
 ```
-Reading it it's pretty easy to understand what's going on; you're creating a user "foo2" that's "at test", with a password of "password".
+Reading it it's pretty easy to understand what's going on; you're creating a user `foo2` that's "*at* `test`", with a password of "`password`".
 All in all, ignoring whatever "@test" is, this is pretty simple to read, and barring the monospace typeface and all-caps syntax, I'm pretty sure any engish speaker off the street could tell you what this is supposed to do on their own.
 
 Things get trickier however as soon as I try to decipher the syntax; In a domain like computing where spaces are used to destinguish between distinct parts of a command or statement, whys are `IDENTIFIED` and `BY` separate? For that matter, why is the verb `IDENTIFIED` used to specify a password, a concept that's much more commonly associated with "Authentication"?
 
-Knowing `@test` is specifying the foo2 user as only being authorized to connect from the `test` host, Were I to chance the syntax of something like this, I'd probably want it written something more like:
+Knowing `@test` is specifying the `foo2`-user as only being authorized to connect from the `test` Host, were I to design the syntax of something like this, I'd probably want it to look a bit more like:
 ```
 USER CREATE foo2 AUTH HOST 'test' AUTH PASSWORD 'password';
 ```
@@ -139,7 +136,7 @@ We want to create a user, so we call on CREATE from USER, then we pass a usernam
 
 ## Inserting data into a database, safely?
 
-Similarly, I've long wondered how one is supposed to input data into an SQL database. Now, this might seem like something that'd be utterly obvious for even a beginner to simply look up, and sure enough, search and you will find answers:
+Similarly, I've long wondered how one is supposed to *input __data__* into an SQL database. Now, this might seem like something that'd be utterly obvious for even a beginner to simply look up, and sure enough, search and you will find answers:
 ```SQL
 INSERT INTO customers (name, adress, balance) VALUES ("John Doe", "Local-street, 127.0.0.1", "39.99");
 ```
