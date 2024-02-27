@@ -96,7 +96,6 @@ It was at least partly because of this that I decided to also give **SQLx** a sh
 
 ...All in all, I'm not sure what I think is better, though I'm currently learning towards returning to diesel.rs, if for no other reason than that it's syncronous by default so, simple, to get started with. Still, SQLx, wasn't too bad either, so I don't know. Using both did certainly feel like it gave me a greater understanding of how database-interactions *look* and *feel* in Rust though, and, perhaps wider programming as well. Again, this is all new to me.
 
-
 ## Lacking documentation
 
 Perhaps it's just my lack of experience navigating these things, but I've found that documentation for a lot of what I'm trying to do, and even the tools to do it to be severely lacking: SQLx feels like it barely has any documentation to speak of, whereas diesel.rs, which to it's credit *does* have a getting-started guide, feels severely lacking for helping the user doing anything beyond re-creating the creators sample-project.
@@ -110,37 +109,3 @@ While perusing the paper-thin introduction to SQLx in it's README, something alm
 So, here's an example where, the documentation feels like it's pushing towards doing things in a certain way. In this case; setting up a re-usable thread-pool for your app instead of creating & dropping connections nilly-willy per call. This is probably smart but, I'm suddenlt also not sure if I'm missing out on *other* potential design considerations I should be having in mind as well.
 
 Secondly, like I've mentioned previously, a lot of the recommended tools people mention for doing something like this are `async`, which is a coding pattern I still don't really understand, and have so far had no luck with teaching myself.
-
-# SQL Databases
-
-I have never understood databases; what value one might derive from storing data in a seperate application from the one you're actually running, though some sort of "standardized" mechanism, when each and every application handles data differenly.
-
-## SQL Syntax
-
-SQL too, has always seemed like a confusingly verbose "language" that never quite satisfied my desire for systematic syntax, instead opting for some weird hybrid that looks part code, part English. Take the following query as an example:
-
-```SQL
-CREATE USER foo2@test IDENTIFIED BY 'password';
-```
-Reading it it's pretty easy to understand what's going on; you're creating a user `foo2` that's "*at* `test`", with a password of "`password`".
-All in all, ignoring whatever "@test" is, this is pretty simple to read, and barring the monospace typeface and all-caps syntax, I'm pretty sure any engish speaker off the street could tell you what this is supposed to do on their own.
-
-Things get trickier however as soon as I try to decipher the syntax; In a domain like computing where spaces are used to destinguish between distinct parts of a command or statement, whys are `IDENTIFIED` and `BY` separate? For that matter, why is the verb `IDENTIFIED` used to specify a password, a concept that's much more commonly associated with "Authentication"?
-
-Knowing `@test` is specifying the `foo2`-user as only being authorized to connect from the `test` Host, were I to design the syntax of something like this, I'd probably want it to look a bit more like:
-```
-USER CREATE foo2 AUTH HOST 'test' AUTH PASSWORD 'password';
-```
-We want to create a user, so we call on CREATE from USER, then we pass a username, and any additional parameters are optional statements to further configure the user, such as, in this case, setting authentication options for what host the user is allowed to connect from, and a password for them to authenticate with.
-
-
-## Inserting data into a database, safely?
-
-Similarly, I've long wondered how one is supposed to *input __data__* into an SQL database. Now, this might seem like something that'd be utterly obvious for even a beginner to simply look up, and sure enough, search and you will find answers:
-```SQL
-INSERT INTO customers (name, adress, balance) VALUES ("John Doe", "Local-street, 127.0.0.1", "39.99");
-```
-Simple enough, right? And yea, honestly, I think it is.
-But what if I instead wanted to say, insert a string with a quotation-mark in it in one of the fields? Sure, we might able to escape it first, so what about a line-break; perhaps we want the adress to be split across multiple lines, what then? Worse yet, what if I wanted to store *arbitrary __binary__ data* in any of these fields? Say, a profile *image*? How am I supposed to insert that? I guess I could maybe encode it into something like `base64`, but that feels *mighty* hacky, and from what I understand, databases *are* indeed supposed to be able to have "binary blob" columns, so how am I supposed to interact with those?
-
-Well, as I began looking though SQLx's documentation, I found my answer: **"parameterized queries"**, which is to define your SQL *query* with *variables* in place of values, and passing the data in seperately though your database interface. Neat! No, really, that sounds perfectly sound to me; write the SQL almost like a shipping label, and then just attach the data. This also apparently has the added benefit of preventing SQL injec- ...wait. I-is that *seriously* how SQL-injection vulnerabilities happen!? Do people seriously just stick user data straight into the SQL query!? That's... at all, acceptable!?
