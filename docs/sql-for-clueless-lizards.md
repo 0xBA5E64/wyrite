@@ -23,30 +23,30 @@ We want to create a user, so we call on `CREATE` from `USER`, then we pass the u
 # Inserting data into a database ...safely?
 Similarly, I've long wondered how one is supposed to *input __data__* into an SQL database. Now, this might seem like something that'd be utterly obvious for even a beginner to simply look up, and sure enough, search and you will find answers:
 ```SQL
-INSERT INTO customers (name, adress, balance) VALUES ("John Doe", "Local-street, 127.0.0.1", "39.99");
+INSERT INTO customers (name, adress, balance) VALUES ("John Doe", "Local-street, 127.0.0.1", 39.99);
 ```
 Simple enough, right? And yeah, honestly, I think it is quite simple.
 But what if I instead wanted to say, insert a string with a quotation-mark in it in one of the fields? Sure, we might able to escape it first, so what about a line-break; perhaps we want the adress to be split across multiple lines, what then? Worse yet, what if I wanted to store *arbitrary __binary__ data* in any of these fields? Say, a profile *image*? How am I supposed to insert that? I guess I could maybe encode it into something like `base64`, but that feels *mighty* hacky, and from what I understand, databases *are* indeed supposed to be able to have "binary blob" columns, so how am I supposed to interact with those?
 
 Well, as I began looking though SQLx's documentation, I found my answer: **"parameterized queries"**, which is to define your SQL *query* with *variables* in place of values, and passing the data in seperately though your database interface:
+
 ```Rust
-
-type Person struct {
-    FirstName string `db:"first_name"`
-    LastName  string `db:"last_name"`
-    Email     string
+struct Customer {
+    name: string,
+    adress: string,
+    balance: i32,
 }
 
-const newEntry = Person{
-    first_name: "Bin",
-    last_name: "Smuth",
-    email: "bensmith@allblacks.nz",
+let newEntry = Customer{
+    name: "John Doe",
+    adress: "Local-street, 127.0.0.1",
+    balance: 39.99
 }
 
-db.NamedExec(`INSERT INTO person (first_name,last_name,email) VALUES (:first_name,:last_name,:email)`, Person)
+sqlx::query_as!(Customer, "INSERT INTO customers (name, adress, balance) VALUES (?, ?, ?)", newEntry)
 
 // TODO: ^ Verify all of this code is an actually working example.
 // (This was quickly scrap-booked together from the sqlx readme)
-
 ```
+
 ...Neat! No, really! That sounds perfectly sound to me; Write the SQL almost like a shipping label, and then just attach the data. This also apparently has the added benefit of preventing SQL injec- ...wait. I-is that *seriously* how SQL-injection vulnerabilities happen!? Do people seriously just stick user data straight into the SQL query!? That's... at all, acceptable!?
