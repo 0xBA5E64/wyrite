@@ -71,5 +71,5 @@ async fn view_posts(State(db_p): State<Arc<Pool<Sqlite>>>) -> String {
         .await
         .expect("couldn't query posts");
 
-    format!("{:?}", out).to_string()
+    format!("{:#?}", out).to_string()
 }
