@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use serde::{Deserialize, Serialize};
 use time;
 
 use axum::{extract::State, Router};
@@ -45,7 +46,7 @@ async fn view_hw() -> &'static str {
     "Hello from Axum, World!"
 }
 
-#[derive(Debug)]
+#[derive(Serialize, Deserialize)]
 struct Post {
     title: String,
     body: String,
@@ -71,5 +72,5 @@ async fn view_posts(State(db_p): State<Arc<Pool<Sqlite>>>) -> String {
         .await
         .expect("couldn't query posts");
 
-    format!("{:#?}", out).to_string()
+    serde_json::to_string_pretty(&out).unwrap()
 }
