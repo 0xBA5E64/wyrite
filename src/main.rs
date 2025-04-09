@@ -3,7 +3,7 @@ use std::sync::Arc;
 use time;
 
 use axum::{extract::State, Router};
-use sqlx::{sqlite::SqlitePoolOptions, Pool, Sqlite};
+use sqlx::{sqlite::{SqlitePoolOptions, SqliteRow}, FromRow, Pool, Row, Sqlite};
 
 #[tokio::main]
 async fn main() {
@@ -39,17 +39,27 @@ async fn view_hw() -> &'static str {
     "Hello from Axum, World!"
 }
 
-#[derive(sqlx::FromRow)]
 #[derive(Debug)]
 struct Post {
     title: String,
     body: String,
     is_published: bool,
-    date_created: i32
+    date_created: time::UtcDateTime
+}
+
+impl FromRow<'_, SqliteRow> for Post {
+    fn from_row(row: &SqliteRow) -> sqlx::Result<Self, sqlx::Error> {
+        Ok(Self {
+            title: row.try_get("title")?,
+            body: row.try_get("body")?,
+            is_published: row.try_get("is_published")?,
+            date_created: time::UtcDateTime::from_unix_timestamp(row.try_get("date_created")?).unwrap(),
+        })
+    }
 }
 
 async fn view_posts(State(db_p): State<Arc<Pool<Sqlite>>>) -> String {
-
+    
     let out = sqlx::query_as::<_, Post>("SELECT * FROM posts")
         .fetch_all(&*db_p)
         .await
