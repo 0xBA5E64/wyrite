@@ -3,7 +3,10 @@ use std::sync::Arc;
 use time;
 
 use axum::{extract::State, Router};
-use sqlx::{sqlite::{SqlitePoolOptions, SqliteRow}, FromRow, Pool, Row, Sqlite};
+use sqlx::{
+    sqlite::{SqlitePoolOptions, SqliteRow},
+    FromRow, Pool, Row, Sqlite,
+};
 
 #[tokio::main]
 async fn main() {
@@ -21,7 +24,10 @@ async fn main() {
 
     // Insert a sample post
     sqlx::query("INSERT INTO posts (title, body, is_published, date_created) VALUES (?,?,?,?)")
-        .bind("A Sample post").bind("This is it's body").bind(0).bind(time::UtcDateTime::now().unix_timestamp())
+        .bind("A Sample post")
+        .bind("This is it's body")
+        .bind(0)
+        .bind(time::UtcDateTime::now().unix_timestamp())
         .execute(&db_pool)
         .await
         .expect("Couldn't add a post");
@@ -44,7 +50,7 @@ struct Post {
     title: String,
     body: String,
     is_published: bool,
-    date_created: time::UtcDateTime
+    date_created: time::UtcDateTime,
 }
 
 impl FromRow<'_, SqliteRow> for Post {
@@ -53,17 +59,17 @@ impl FromRow<'_, SqliteRow> for Post {
             title: row.try_get("title")?,
             body: row.try_get("body")?,
             is_published: row.try_get("is_published")?,
-            date_created: time::UtcDateTime::from_unix_timestamp(row.try_get("date_created")?).unwrap(),
+            date_created: time::UtcDateTime::from_unix_timestamp(row.try_get("date_created")?)
+                .unwrap(),
         })
     }
 }
 
 async fn view_posts(State(db_p): State<Arc<Pool<Sqlite>>>) -> String {
-    
     let out = sqlx::query_as::<_, Post>("SELECT * FROM posts")
         .fetch_all(&*db_p)
         .await
         .expect("couldn't query posts");
-    
+
     format!("{:?}", out).to_string()
 }
