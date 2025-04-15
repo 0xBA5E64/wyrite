@@ -5,11 +5,19 @@ use serde::{Deserialize, Serialize};
 use axum::{extract::State, Router};
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 
+use dotenvy::dotenv;
+
 #[tokio::main]
 async fn main() {
+    dotenv().expect(".env file not found");
+
     let db_pool = PgPoolOptions::new()
         .max_connections(4)
-        .connect("postgres://wyrite:notsosecret@localhost:5000")
+        .connect(
+            std::env::var("DATABASE_URL")
+                .expect("No DATABASE_URL Specified in environment")
+                .as_str(),
+        )
         .await
         .expect("no bueno deebee");
 
@@ -32,7 +40,9 @@ async fn main() {
         .route("/posts", axum::routing::get(view_posts))
         .with_state(Arc::new(db_pool));
 
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3300").await.unwrap();
+    let addr = std::env::var("HOST").unwrap_or("0.0.0.0:3000".to_string());
+
+    let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
     axum::serve(listener, app).await.unwrap();
 }
 
