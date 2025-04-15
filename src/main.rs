@@ -5,6 +5,8 @@ use serde::{Deserialize, Serialize};
 use axum::{extract::State, Router};
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 
+use uuid::Uuid;
+
 use dotenvy::dotenv;
 
 #[tokio::main]
@@ -52,6 +54,7 @@ async fn view_hw() -> &'static str {
 
 #[derive(sqlx::FromRow, Serialize, Deserialize)]
 struct Post {
+    uuid: Uuid,
     title: String,
     body: String,
     is_published: bool,
