@@ -35,12 +35,14 @@ async fn main() {
         .expect("Migrations Failed");
 
     // Insert a sample post
-    sqlx::query("INSERT INTO posts (title, body) VALUES ($1,$2)")
-        .bind("A Sample post")
-        .bind("This is it's body")
-        .execute(&db_pool)
-        .await
-        .expect("Couldn't add a post");
+    sqlx::query!(
+        "INSERT INTO posts (title, body) VALUES ($1,$2)",
+        "A Sample post",
+        "This is it's body"
+    )
+    .execute(&db_pool)
+    .await
+    .expect("Couldn't add a post");
 
     let app = Router::new()
         .route("/", get(view_hw))
@@ -71,20 +73,43 @@ struct Post {
 }
 
 async fn list_posts(State(db_p): State<Arc<Pool<Postgres>>>) -> String {
-    let out = sqlx::query_as::<_, Post>("SELECT * FROM post_view")
-        .fetch_all(&*db_p)
-        .await
-        .expect("couldn't query posts");
+    // This query is a total mess due to sqlx being unable to determine the nullability of fields of a view
+    // See https://github.com/launchbadge/sqlx/issues/3192#issuecomment-2807790647
+    let out = sqlx::query_as!(
+        Post,
+        r#"
+            SELECT
+                uuid AS "uuid!",
+                title AS "title!",
+                body AS "body!",
+                is_published AS "is_published!",
+                date_created AS "date_created!",
+                date_published FROM post_view"#
+    )
+    .fetch_all(&*db_p)
+    .await
+    .expect("couldn't query posts");
 
     serde_json::to_string_pretty(&out).unwrap()
 }
 
-async fn view_post(Path(post_id): Path<String>, State(db_p): State<Arc<Pool<Postgres>>>) -> String {
-    let out = sqlx::query_as::<_, Post>("SELECT * FROM post_view WHERE uuid = $1::uuid")
-        .bind(post_id)
-        .fetch_one(&*db_p)
-        .await
-        .expect("couldn't query posts");
+async fn view_post(Path(post_id): Path<Uuid>, State(db_p): State<Arc<Pool<Postgres>>>) -> String {
+    let out = sqlx::query_as!(
+        Post,
+        r#"
+            SELECT
+                uuid AS "uuid!",
+                title AS "title!",
+                body AS "body!",
+                is_published AS "is_published!",
+                date_created AS "date_created!",
+                date_published FROM post_view
+            WHERE uuid = $1::uuid"#,
+        post_id
+    )
+    .fetch_one(&*db_p)
+    .await
+    .expect("couldn't query posts");
 
     serde_json::to_string_pretty(&out).unwrap()
 }
