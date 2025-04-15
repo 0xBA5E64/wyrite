@@ -2,7 +2,11 @@ use std::sync::Arc;
 
 use serde::{Deserialize, Serialize};
 
-use axum::{extract::State, Router};
+use axum::{
+    extract::{Path, State},
+    routing::get,
+    Router,
+};
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 
 use uuid::Uuid;
@@ -38,8 +42,9 @@ async fn main() {
         .expect("Couldn't add a post");
 
     let app = Router::new()
-        .route("/", axum::routing::get(view_hw))
-        .route("/posts", axum::routing::get(view_posts))
+        .route("/", get(view_hw))
+        .route("/posts", get(list_posts))
+        .route("/posts/{post_id}", get(view_post))
         .with_state(Arc::new(db_pool));
 
     let addr = std::env::var("HOST").unwrap_or("0.0.0.0:3000".to_string());
@@ -62,9 +67,19 @@ struct Post {
     date_published: Option<time::OffsetDateTime>,
 }
 
-async fn view_posts(State(db_p): State<Arc<Pool<Postgres>>>) -> String {
+async fn list_posts(State(db_p): State<Arc<Pool<Postgres>>>) -> String {
     let out = sqlx::query_as::<_, Post>("SELECT * FROM post_view")
         .fetch_all(&*db_p)
+        .await
+        .expect("couldn't query posts");
+
+    serde_json::to_string_pretty(&out).unwrap()
+}
+
+async fn view_post(Path(post_id): Path<String>, State(db_p): State<Arc<Pool<Postgres>>>) -> String {
+    let out = sqlx::query_as::<_, Post>("SELECT * FROM post_view WHERE uuid = $1::uuid")
+        .bind(post_id)
+        .fetch_one(&*db_p)
         .await
         .expect("couldn't query posts");
 
