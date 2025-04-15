@@ -7,6 +7,7 @@ use axum::{
     routing::get,
     Router,
 };
+
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 
 use uuid::Uuid;
@@ -63,7 +64,9 @@ struct Post {
     title: String,
     body: String,
     is_published: bool,
+    #[serde(with = "time::serde::rfc3339")]
     date_created: time::OffsetDateTime,
+    // TODO: Serialize this too with time::serde::rfc3339, tricky since Option :|
     date_published: Option<time::OffsetDateTime>,
 }
 
