@@ -1,19 +1,15 @@
 use std::sync::Arc;
 
 use serde::{Deserialize, Serialize};
-use time;
 
 use axum::{extract::State, Router};
-use sqlx::{
-    sqlite::{SqlitePoolOptions, SqliteRow},
-    FromRow, Pool, Row, Sqlite,
-};
+use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 
 #[tokio::main]
 async fn main() {
-    let db_pool = SqlitePoolOptions::new()
+    let db_pool = PgPoolOptions::new()
         .max_connections(4)
-        .connect("sqlite://db.sqlite?mode=rwc")
+        .connect("postgres://wyrite:notsosecret@localhost:5000")
         .await
         .expect("no bueno deebee");
 
@@ -24,11 +20,9 @@ async fn main() {
         .expect("Migrations Failed");
 
     // Insert a sample post
-    sqlx::query("INSERT INTO posts (title, body, is_published, date_created) VALUES (?,?,?,?)")
+    sqlx::query("INSERT INTO posts (title, body) VALUES ($1,$2)")
         .bind("A Sample post")
         .bind("This is it's body")
-        .bind(0)
-        .bind(time::UtcDateTime::now().unix_timestamp())
         .execute(&db_pool)
         .await
         .expect("Couldn't add a post");
@@ -38,7 +32,7 @@ async fn main() {
         .route("/posts", axum::routing::get(view_posts))
         .with_state(Arc::new(db_pool));
 
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:3300").await.unwrap();
     axum::serve(listener, app).await.unwrap();
 }
 
@@ -46,28 +40,17 @@ async fn view_hw() -> &'static str {
     "Hello from Axum, World!"
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(sqlx::FromRow, Serialize, Deserialize)]
 struct Post {
     title: String,
     body: String,
     is_published: bool,
-    date_created: time::UtcDateTime,
+    date_created: time::OffsetDateTime,
+    date_published: Option<time::OffsetDateTime>,
 }
 
-impl FromRow<'_, SqliteRow> for Post {
-    fn from_row(row: &SqliteRow) -> sqlx::Result<Self, sqlx::Error> {
-        Ok(Self {
-            title: row.try_get("title")?,
-            body: row.try_get("body")?,
-            is_published: row.try_get("is_published")?,
-            date_created: time::UtcDateTime::from_unix_timestamp(row.try_get("date_created")?)
-                .unwrap(),
-        })
-    }
-}
-
-async fn view_posts(State(db_p): State<Arc<Pool<Sqlite>>>) -> String {
-    let out = sqlx::query_as::<_, Post>("SELECT * FROM posts")
+async fn view_posts(State(db_p): State<Arc<Pool<Postgres>>>) -> String {
+    let out = sqlx::query_as::<_, Post>("SELECT * FROM post_view")
         .fetch_all(&*db_p)
         .await
         .expect("couldn't query posts");
