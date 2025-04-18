@@ -63,6 +63,7 @@ async fn view_hw() -> &'static str {
 #[derive(sqlx::FromRow, Serialize, Deserialize)]
 struct Post {
     uuid: Uuid,
+    slug: String,
     title: String,
     body: String,
     is_published: bool,
@@ -76,15 +77,19 @@ async fn list_posts(State(db_p): State<Arc<Pool<Postgres>>>) -> String {
     // This query is a total mess due to sqlx being unable to determine the nullability of fields of a view
     // See https://github.com/launchbadge/sqlx/issues/3192#issuecomment-2807790647
     let out = sqlx::query_as!(Post, r#"SELECT * FROM post_view"#)
-    .fetch_all(&*db_p)
-    .await
-    .expect("couldn't query posts");
+        .fetch_all(&*db_p)
+        .await
+        .expect("couldn't query posts");
 
     serde_json::to_string_pretty(&out).unwrap()
 }
 
 async fn view_post(Path(post_id): Path<Uuid>, State(db_p): State<Arc<Pool<Postgres>>>) -> String {
-    let out = sqlx::query_as!(Post, r#"SELECT * FROM post_view WHERE "uuid!" = $1::uuid"#, post_id)
+    let out = sqlx::query_as!(
+        Post,
+        r#"SELECT * FROM post_view WHERE "uuid!" = $1::uuid"#,
+        post_id
+    )
     .fetch_one(&*db_p)
     .await
     .expect("couldn't query posts");
