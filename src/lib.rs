@@ -13,3 +13,9 @@ pub struct Post {
     // TODO: Serialize this too with time::serde::rfc3339, tricky since Option :|
     pub date_published: Option<time::OffsetDateTime>,
 }
+
+#[derive(sqlx::FromRow, Serialize, Deserialize)]
+pub struct PostInsert {
+    pub title: String,
+    pub body: String,
+}
