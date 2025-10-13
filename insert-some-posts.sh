@@ -1,0 +1,2 @@
+curl -X POST -H 'Content-Type: application/json' -d '{"title":"A First Post","body":"Nothing too exciting but we all have to start somewhere..."}' http://localhost:3000/api/posts
+curl -X POST -H 'Content-Type: application/json' -d '{"title":"A Second Post","body":"Same as the previous only different."}' http://localhost:3000/api/posts

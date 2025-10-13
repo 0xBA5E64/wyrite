@@ -27,16 +27,6 @@ async fn main() {
         .await
         .expect("Migrations Failed");
 
-    // Insert a sample post
-    sqlx::query!(
-        "INSERT INTO posts (title, body) VALUES ($1,$2)",
-        "A Sample post",
-        "This is it's body"
-    )
-    .execute(&db_pool)
-    .await
-    .expect("Couldn't add a post");
-
     let app = Router::new()
         .route("/", get(view_hw))
         .nest("/api", api::get_routes())
