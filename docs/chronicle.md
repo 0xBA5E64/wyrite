@@ -109,3 +109,9 @@ While perusing the paper-thin introduction to SQLx in it's README, something alm
 So, here's an example where, the documentation feels like it's pushing towards doing things in a certain way. In this case; setting up a re-usable thread-pool for your app instead of creating & dropping connections nilly-willy per call. This is probably smart but, I'm suddenlt also not sure if I'm missing out on *other* potential design considerations I should be having in mind as well.
 
 Secondly, like I've mentioned previously, a lot of the recommended tools people mention for doing something like this are `async`, which is a coding pattern I still don't really understand, and have so far had no luck with teaching myself.
+
+
+# ---
+Okay so after what feels like literal years of putting it off I'm finally trying to face this by putting something to the table: Axul & sqlx. I've made a basic router with Axul (easy enough) and am now stuck where right where I've been pondering throughout most of all of this: working with sqlx. The ever present issue is, sqlx does not have proper documentation. It has *documentation*, as in, there's a docs.rs page which explains what all the different functions, classes and macros do, but there's no proper introduction as to how to properly use all of it's features. The readme has a Quick Start section, which would be fine, however, since I'm trying to make use of it's auto-migration features, I'm running into some serious issues finding any basic documentation on it.
+
+So far I've just, tried making a pool, attached the `.migrate!()` macro autocomplete tells me exist, installed the sqlx-cli app via cargo, and generated a migration file

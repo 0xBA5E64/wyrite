@@ -1,0 +1,1 @@
+docker run --name wyrite-db -e POSTGRES_USER=wyrite -e POSTGRES_PASSWORD=notsosecret -e PGDATA=/var/lib/postgresql/data/pgdata -v ./.db-data/:/var/lib/postgresql/data -p 5000:5432 -d postgres
