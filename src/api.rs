@@ -1,8 +1,10 @@
 use std::sync::Arc;
 
 use axum::{
-    extract::{Path, State},
-    routing::{get, post},
+    body::Body,
+    extract::{Query, State},
+    http::{Response, StatusCode},
+    routing::get,
     Json,
 };
 
@@ -14,8 +16,7 @@ use wyrite::{Post, PostInsert};
 pub fn get_routes() -> axum::Router<Arc<Pool<Postgres>>> {
     axum::Router::new()
         .route("/posts", get(list_posts))
-        .route("/posts", post(add_post))
-        .route("/posts/{post_id}", get(view_post))
+        .route("/post", get(view_post).post(add_post))
 }
 
 async fn list_posts(State(db_p): State<Arc<Pool<Postgres>>>) -> String {
@@ -27,17 +28,45 @@ async fn list_posts(State(db_p): State<Arc<Pool<Postgres>>>) -> String {
     serde_json::to_string_pretty(&out).unwrap()
 }
 
-async fn view_post(Path(post_id): Path<Uuid>, State(db_p): State<Arc<Pool<Postgres>>>) -> String {
-    let out = sqlx::query_as!(
-        Post,
-        r#"SELECT * FROM post_view WHERE "uuid!" = $1::uuid"#,
-        post_id
-    )
-    .fetch_one(&*db_p)
-    .await
-    .expect("couldn't query posts");
+#[derive(serde::Deserialize, serde::Serialize)]
+pub struct ViewPostOpts {
+    uuid: Option<Uuid>,
+    slug: Option<String>,
+}
 
-    serde_json::to_string_pretty(&out).unwrap()
+async fn view_post(
+    Query(page_opts): Query<ViewPostOpts>,
+    State(db_p): State<Arc<Pool<Postgres>>>, //State(db_p): State<Arc<Pool<Postgres>>>,
+) -> Response<Body> {
+    let post_query: Option<Post> = if let Some(slug) = page_opts.slug {
+        sqlx::query_as!(Post, r#"SELECT * FROM post_view WHERE "slug!" = $1"#, slug)
+            .fetch_optional(&*db_p)
+            .await
+            .expect("couldn't query posts")
+    } else if let Some(uuid) = page_opts.uuid {
+        sqlx::query_as!(
+            Post,
+            r#"SELECT * FROM post_view WHERE "uuid!" = $1::uuid"#,
+            uuid
+        )
+        .fetch_optional(&*db_p)
+        .await
+        .expect("couldn't query posts")
+    } else {
+        None
+    };
+
+    if let Some(post) = post_query {
+        Response::builder()
+            .status(StatusCode::OK)
+            .body(Body::from(serde_json::to_string_pretty(&post).unwrap()))
+            .unwrap()
+    } else {
+        Response::builder()
+            .status(StatusCode::OK)
+            .body(Body::from("Post not found"))
+            .unwrap()
+    }
 }
 
 async fn add_post(State(db_p): State<Arc<Pool<Postgres>>>, Json(post): Json<PostInsert>) -> String {
