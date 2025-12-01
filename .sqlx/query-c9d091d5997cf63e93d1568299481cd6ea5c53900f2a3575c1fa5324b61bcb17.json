@@ -1,0 +1,56 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT * FROM post_view",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "uuid!",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "slug!",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "title!",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "body!",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "is_published!",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 5,
+        "name": "date_created!",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 6,
+        "name": "date_published",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "c9d091d5997cf63e93d1568299481cd6ea5c53900f2a3575c1fa5324b61bcb17"
+}
