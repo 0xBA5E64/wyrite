@@ -1,13 +1,5 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>wyrite</title>
-</head>
-<body>
-    <h1>{{ post.title }}</h1>
-    <p>{{ post.body }}</p>
-    <a href="/posts">Posts</a>
-</body>
-</html>
+{{#* inline "inside"}}
+<h1 id="post-title">{{ post.title }}</h1>
+<p>{{ post.body }}</p>
+{{/inline}}
+{{> base}}

@@ -1,16 +1,11 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>wyrite</title>
-</head>
-<body>
-    <h1>Post Index</h1>
-    <ul>
-        {{#each posts}}
-        <li><code>[{{ uuid }}]</code> <a href="/post/{{slug}}">{{ title }}</a></li>
-        {{/each}}
-    </ul>
-</body>
-</html>
+{{#* inline "inside"}}
+<table id="post-table">
+    {{#each posts}}
+    <tr>
+       <th class="title"><a href="/post/{{slug}}">{{title}}</a></th>
+       <th class="uuid">{{uuid}}</th>
+    </tr>
+    {{/each}}
+</table>
+{{/inline}}
+{{> base}}

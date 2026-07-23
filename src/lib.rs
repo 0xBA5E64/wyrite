@@ -30,6 +30,7 @@ impl AppState {
         .unwrap();
 
         let mut templates = Handlebars::new();
+        templates.set_dev_mode(cfg!(debug_assertions));
         templates
             .register_templates_directory("templates/", DirectorySourceOptions::default())
             .unwrap();

@@ -1,0 +1,51 @@
+html, body { margin: 0; }
+
+body {
+    display: flex;
+    justify-content: center;
+
+    background: #DDD;
+    font-family: sans-serif;
+}
+
+a {
+    text-decoration: none;
+    font-weight: bold;;
+}
+
+#page {
+    max-width: 1200px;
+    width: 80%;
+}
+
+#post-table {
+    margin: 16px 0;
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#post-table tr > * {
+    padding: 8px 24px;
+}
+
+#post-table tr:nth-child(odd) {
+ background-color: #0001;
+}
+
+#post-table tr:nth-child(even) {
+ background-color: #0002;
+}
+
+#post-table .title {
+    text-align: left;
+}
+
+#post-table .uuid {
+    text-align: right;
+    font-family: monospace;
+    opacity: 0.5;
+}
+
+#post-title {
+    font-size: 2.5em;
+}
