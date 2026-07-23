@@ -1,9 +1,8 @@
 use std::sync::Arc;
 
 use axum::{routing::get, Router};
-
 use dotenvy::dotenv;
-use sqlx::postgres::PgPoolOptions;
+use wyrite::AppState;
 
 mod api;
 
@@ -11,30 +10,22 @@ mod api;
 async fn main() {
     dotenv().expect(".env file not found");
 
-    let db_pool = PgPoolOptions::new()
-        .max_connections(4)
-        .connect(
-            std::env::var("DATABASE_URL")
-                .expect("No DATABASE_URL Specified in environment")
-                .as_str(),
-        )
-        .await
-        .expect("no bueno deebee");
+    let app_state = Arc::new(AppState::new().await);
 
     // Run Database migrations
     sqlx::migrate!()
-        .run(&db_pool)
+        .run(&app_state.db_pool)
         .await
         .expect("Migrations Failed");
+
+    let host = &app_state.host.clone();
 
     let app = Router::new()
         .route("/", get(view_hw))
         .nest("/api", api::get_routes())
-        .with_state(Arc::new(db_pool));
+        .with_state(app_state);
 
-    let addr = std::env::var("HOST").unwrap_or("0.0.0.0:3000".to_string());
-
-    let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
+    let listener = tokio::net::TcpListener::bind(host).await.unwrap();
     axum::serve(listener, app).await.unwrap();
 }
 

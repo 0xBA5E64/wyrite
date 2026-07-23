@@ -1,6 +1,29 @@
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+pub struct AppState {
+    pub host: String,
+    pub db_pool: sqlx::Pool<sqlx::Postgres>,
+}
+
+impl AppState {
+    pub async fn new() -> Self {
+        let db_pool = sqlx::postgres::PgPoolOptions::new()
+            .max_connections(4)
+            .connect(
+                std::env::var("DATABASE_URL")
+                    .expect("No DATABASE_URL Specified in environment")
+                    .as_str(),
+            )
+            .await
+            .expect("no bueno deebee");
+
+        let host = std::env::var("HOST").expect("No HOST specified in environment");
+
+        AppState { db_pool, host }
+    }
+}
+
 #[derive(sqlx::FromRow, Serialize, Deserialize)]
 pub struct Post {
     pub uuid: Uuid,

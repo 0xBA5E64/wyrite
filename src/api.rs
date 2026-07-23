@@ -7,21 +7,18 @@ use axum::{
     routing::get,
     Json,
 };
-
-use sqlx::{Pool, Postgres};
-
 use uuid::Uuid;
-use wyrite::{Post, PostInsert};
+use wyrite::{AppState, Post, PostInsert};
 
-pub fn get_routes() -> axum::Router<Arc<Pool<Postgres>>> {
+pub fn get_routes() -> axum::Router<Arc<AppState>> {
     axum::Router::new()
         .route("/posts", get(list_posts))
         .route("/post", get(view_post).post(add_post))
 }
 
-async fn list_posts(State(db_p): State<Arc<Pool<Postgres>>>) -> String {
+async fn list_posts(State(app_state): State<Arc<AppState>>) -> String {
     let out = sqlx::query_as!(Post, r#"SELECT * FROM post_view"#)
-        .fetch_all(&*db_p)
+        .fetch_all(&app_state.db_pool)
         .await
         .expect("couldn't query posts");
 
@@ -36,11 +33,11 @@ pub struct ViewPostOpts {
 
 async fn view_post(
     Query(page_opts): Query<ViewPostOpts>,
-    State(db_p): State<Arc<Pool<Postgres>>>, //State(db_p): State<Arc<Pool<Postgres>>>,
+    State(app_state): State<Arc<AppState>>,
 ) -> Response<Body> {
     let post_query: Option<Post> = if let Some(slug) = page_opts.slug {
         sqlx::query_as!(Post, r#"SELECT * FROM post_view WHERE "slug!" = $1"#, slug)
-            .fetch_optional(&*db_p)
+            .fetch_optional(&app_state.db_pool)
             .await
             .expect("couldn't query posts")
     } else if let Some(uuid) = page_opts.uuid {
@@ -49,7 +46,7 @@ async fn view_post(
             r#"SELECT * FROM post_view WHERE "uuid!" = $1::uuid"#,
             uuid
         )
-        .fetch_optional(&*db_p)
+        .fetch_optional(&app_state.db_pool)
         .await
         .expect("couldn't query posts")
     } else {
@@ -69,13 +66,13 @@ async fn view_post(
     }
 }
 
-async fn add_post(State(db_p): State<Arc<Pool<Postgres>>>, Json(post): Json<PostInsert>) -> String {
+async fn add_post(State(app_state): State<Arc<AppState>>, Json(post): Json<PostInsert>) -> String {
     sqlx::query!(
         r#"INSERT INTO posts (title, body) VALUES ($1,$2)"#,
         &post.title,
         &post.body
     )
-    .execute(&*db_p)
+    .execute(&app_state.db_pool)
     .await
     .expect("couldn't add a post")
     .rows_affected()
