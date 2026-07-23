@@ -1,10 +1,11 @@
 use std::sync::Arc;
 
-use axum::{routing::get, Router};
+use axum::Router;
 use dotenvy::dotenv;
+use tower_http::services::ServeDir;
 use wyrite::AppState;
 
-mod api;
+mod routes;
 
 #[tokio::main]
 async fn main() {
@@ -22,16 +23,13 @@ async fn main() {
     let port: u16 = std::env::var("PORT").unwrap().parse().unwrap();
 
     let app = Router::new()
-        .route("/", get(view_hw))
-        .nest("/api", api::get_routes())
+        .merge(routes::web::get_routes())
+        .nest("/api", routes::api::get_routes())
+        .nest_service("/assets", ServeDir::new("assets"))
         .with_state(app_state);
 
     let listener = tokio::net::TcpListener::bind(format!("{host}:{port}"))
         .await
         .unwrap();
     axum::serve(listener, app).await.unwrap();
-}
-
-async fn view_hw() -> &'static str {
-    "Hello from Axum, World!"
 }
