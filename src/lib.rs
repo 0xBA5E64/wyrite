@@ -1,8 +1,10 @@
+use std::{net::Ipv4Addr, str::FromStr};
+
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 pub struct AppState {
-    pub host: String,
+    pub host: Ipv4Addr,
     pub db_pool: sqlx::Pool<sqlx::Postgres>,
 }
 
@@ -18,7 +20,12 @@ impl AppState {
             .await
             .expect("no bueno deebee");
 
-        let host = std::env::var("HOST").expect("No HOST specified in environment");
+        let host: Ipv4Addr = Ipv4Addr::from_str(
+            std::env::var("HOST")
+                .unwrap_or("0.0.0.0".to_string())
+                .as_str(),
+        )
+        .unwrap();
 
         AppState { db_pool, host }
     }

@@ -18,14 +18,17 @@ async fn main() {
         .await
         .expect("Migrations Failed");
 
-    let host = &app_state.host.clone();
+    let host = app_state.host;
+    let port: u16 = std::env::var("PORT").unwrap().parse().unwrap();
 
     let app = Router::new()
         .route("/", get(view_hw))
         .nest("/api", api::get_routes())
         .with_state(app_state);
 
-    let listener = tokio::net::TcpListener::bind(host).await.unwrap();
+    let listener = tokio::net::TcpListener::bind(format!("{host}:{port}"))
+        .await
+        .unwrap();
     axum::serve(listener, app).await.unwrap();
 }
 
