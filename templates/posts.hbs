@@ -6,8 +6,11 @@
 	<title>wyrite</title>
 </head>
 <body>
-    <h1>{{ title }}</h1>
-    <a href="/posts">Posts</a>
-    <p>{{ body }}</p>
+    <h1>Post Index</h1>
+    <ul>
+        {{#each posts}}
+        <li><code>[{{ date_created }}]</code> <a href="/post/{{slug}}">{{ title }}</a></li>
+        {{/each}}
+    </ul>
 </body>
 </html>
