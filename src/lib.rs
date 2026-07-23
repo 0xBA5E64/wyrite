@@ -5,8 +5,10 @@ use uuid::Uuid;
 
 pub struct AppState {
     pub host: Ipv4Addr,
+    pub templates: Handlebars<'static>,
     pub db_pool: sqlx::Pool<sqlx::Postgres>,
 }
+use handlebars::{DirectorySourceOptions, Handlebars};
 
 impl AppState {
     pub async fn new() -> Self {
@@ -27,7 +29,16 @@ impl AppState {
         )
         .unwrap();
 
-        AppState { db_pool, host }
+        let mut templates = Handlebars::new();
+        templates
+            .register_templates_directory("templates/", DirectorySourceOptions::default())
+            .unwrap();
+
+        AppState {
+            db_pool,
+            templates,
+            host,
+        }
     }
 }
 

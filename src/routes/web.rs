@@ -1,6 +1,9 @@
 use std::sync::Arc;
 
+use axum::extract::State;
+use axum::response::IntoResponse;
 use axum::routing::get;
+use serde_json::json;
 use wyrite::AppState;
 
 pub fn get_routes() -> axum::Router<Arc<AppState>> {
@@ -9,10 +12,22 @@ pub fn get_routes() -> axum::Router<Arc<AppState>> {
         .route("/posts", get(view_posts))
 }
 
-async fn view_home() -> &'static str {
-    "Hello from Axum, World!"
+#[axum::debug_handler]
+async fn view_home(app_state: State<Arc<AppState>>) -> impl IntoResponse {
+    let data = &json!({
+        "title": "Hello World",
+        "body": "Welcome to wyrite"
+    });
+
+    app_state.templates.render("index", data).unwrap();
 }
 
-async fn view_posts() -> &'static str {
-    "This will be the posts list!"
+#[axum::debug_handler]
+async fn view_posts(app_state: State<Arc<AppState>>) -> impl IntoResponse {
+    let data = &json!({
+        "title": "Index Page",
+        "body": "Not yet ready"
+    });
+
+    app_state.templates.render("index", data).unwrap();
 }
