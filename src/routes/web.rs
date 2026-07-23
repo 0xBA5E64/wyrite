@@ -25,14 +25,10 @@ async fn view_home(app_state: State<Arc<AppState>>) -> impl IntoResponse {
 
 #[axum::debug_handler]
 async fn view_post(app_state: State<Arc<AppState>>, Path(slug): Path<String>) -> impl IntoResponse {
-    let post = sqlx::query_as!(
-        wyrite::Post,
-        "SELECT * FROM post_view WHERE \"slug!\" = $1",
-        slug
-    )
-    .fetch_optional(&app_state.db_pool)
-    .await
-    .unwrap();
+    let post = sqlx::query_as!(wyrite::Post, "SELECT * FROM posts WHERE slug = $1", slug)
+        .fetch_optional(&app_state.db_pool)
+        .await
+        .unwrap();
 
     let data = &json!({
         "post": post
@@ -43,7 +39,7 @@ async fn view_post(app_state: State<Arc<AppState>>, Path(slug): Path<String>) ->
 
 #[axum::debug_handler]
 async fn view_posts(app_state: State<Arc<AppState>>) -> impl IntoResponse {
-    let posts = sqlx::query_as!(wyrite::Post, "SELECT * FROM post_view")
+    let posts = sqlx::query_as!(wyrite::Post, "SELECT * FROM posts")
         .fetch_all(&app_state.db_pool)
         .await
         .unwrap();

@@ -17,7 +17,7 @@ pub fn get_routes() -> axum::Router<Arc<AppState>> {
 }
 
 async fn list_posts(State(app_state): State<Arc<AppState>>) -> String {
-    let out = sqlx::query_as!(Post, r#"SELECT * FROM post_view"#)
+    let out = sqlx::query_as!(Post, "SELECT * FROM posts")
         .fetch_all(&app_state.db_pool)
         .await
         .expect("couldn't query posts");
@@ -36,19 +36,15 @@ async fn view_post(
     State(app_state): State<Arc<AppState>>,
 ) -> Response<Body> {
     let post_query: Option<Post> = if let Some(slug) = page_opts.slug {
-        sqlx::query_as!(Post, r#"SELECT * FROM post_view WHERE "slug!" = $1"#, slug)
+        sqlx::query_as!(Post, "SELECT * FROM posts WHERE slug = $1", slug)
             .fetch_optional(&app_state.db_pool)
             .await
             .expect("couldn't query posts")
     } else if let Some(uuid) = page_opts.uuid {
-        sqlx::query_as!(
-            Post,
-            r#"SELECT * FROM post_view WHERE "uuid!" = $1::uuid"#,
-            uuid
-        )
-        .fetch_optional(&app_state.db_pool)
-        .await
-        .expect("couldn't query posts")
+        sqlx::query_as!(Post, "SELECT * FROM posts WHERE uuid = $1::uuid", uuid)
+            .fetch_optional(&app_state.db_pool)
+            .await
+            .expect("couldn't query posts")
     } else {
         None
     };
