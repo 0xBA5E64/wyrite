@@ -5,10 +5,17 @@ Chronicling my long-running quest of figuring out how to build a functioning blo
 See [`chronicle.md`](docs/chronicle.md)
 
 ## todo:
- - [ ] server-side templated frontend
- - [ ] Auth? Passkeys maybe?
+ - [ ] Web: Unify HTTP/HTML response handling, both OK and Error
+ - [ ] Better error-management with ThisError
+ - [ ] Web: Auth
+   - [ ] Implement Authentication middleware
+   - [ ] Implement JWT
+   - [ ] Protect endpoints for: new posts, (edit posts?) delete posts, publish posts
+   - [ ] Investigate passkey option?
+   - [ ] API: token system maybe?
+ - [ ] Migrate from UUIDv1 to UUIDv7
+ - [X] server-side templated frontend
  - [X] Serve files from ~~`static/`~~ `assets/`
- - [ ] remove is_published flag, rename date_published to published, check if null for unpublished
+ - [X] remove is_published flag, rename date_published to published, check if null for unpublished
  - [ ] (?) Rewrite slug function in python or some other language in the database
- - [ ] Authenticate: new posts, delete posts, publish posts
  - [X] Fix Slugs getting new superflous suffix when publishing
