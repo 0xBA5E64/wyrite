@@ -1,8 +1,12 @@
 use std::sync::Arc;
 
+use axum::body::Body;
 use axum::extract::{Path, State};
-use axum::response::{Html, IntoResponse};
+use axum::http::{Response, StatusCode};
+use axum::response::{Html, IntoResponse, Redirect};
 use axum::routing::get;
+use axum::Form;
+use serde::Deserialize;
 use serde_json::json;
 use wyrite::AppState;
 
@@ -11,6 +15,7 @@ pub fn get_routes() -> axum::Router<Arc<AppState>> {
         .route("/", get(view_home))
         .route("/post/{slug}", get(view_post))
         .route("/posts", get(view_posts))
+        .route("/posts/new", get(view_new_post).post(post_new_post))
 }
 
 #[axum::debug_handler]
@@ -49,4 +54,36 @@ async fn view_posts(app_state: State<Arc<AppState>>) -> impl IntoResponse {
     });
 
     Html(app_state.templates.render("posts", data).unwrap())
+}
+
+async fn view_new_post(app_state: State<Arc<AppState>>) -> impl IntoResponse {
+    Html(app_state.templates.render("new_post", &json!({})).unwrap())
+}
+
+#[derive(Deserialize)]
+struct NewPost {
+    title: String,
+    body: String,
+}
+
+#[axum::debug_handler]
+async fn post_new_post(
+    app_state: State<Arc<AppState>>,
+    Form(new_post): Form<NewPost>,
+) -> impl IntoResponse {
+    let new_post = sqlx::query!(
+        "INSERT INTO Posts (title, body) VALUES ($1, $2) RETURNING slug",
+        new_post.title,
+        new_post.body
+    )
+    .fetch_one(&app_state.db_pool)
+    .await;
+
+    match new_post {
+        Ok(slug) => Redirect::to(format!("/post/{}", slug.slug).as_str()).into_response(),
+        Err(err) => Response::builder()
+            .status(StatusCode::INTERNAL_SERVER_ERROR)
+            .body(Body::from(format!("{err:?}")))
+            .unwrap(),
+    }
 }
