@@ -15,6 +15,7 @@ pub fn get_routes() -> axum::Router<Arc<AppState>> {
         .route("/", get(view_home))
         .route("/post/{slug}", get(view_post))
         .route("/post/{slug}/delete", get(delete_post))
+        .route("/post/{slug}/publish", get(publish_post))
         .route("/posts", get(view_posts))
         .route("/posts/new", get(view_new_post).post(post_new_post))
 }
@@ -98,6 +99,28 @@ async fn delete_post(
         .fetch_optional(&app_state.db_pool)
         .await
         .unwrap();
+
+    match query {
+        Some(_) => Redirect::to("/posts").into_response(),
+        None => Response::builder()
+            .status(StatusCode::NOT_FOUND)
+            .body(Body::empty())
+            .unwrap(),
+    }
+}
+
+#[axum::debug_handler]
+async fn publish_post(
+    app_state: State<Arc<AppState>>,
+    Path(slug): Path<String>,
+) -> impl IntoResponse {
+    let query = sqlx::query!(
+        "UPDATE Posts SET published = current_timestamp(0) WHERE slug = $1 RETURNING slug",
+        slug
+    )
+    .fetch_optional(&app_state.db_pool)
+    .await
+    .unwrap();
 
     match query {
         Some(_) => Redirect::to("/posts").into_response(),
