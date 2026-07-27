@@ -14,6 +14,7 @@ pub fn get_routes() -> axum::Router<Arc<AppState>> {
     axum::Router::new()
         .route("/", get(view_home))
         .route("/post/{slug}", get(view_post))
+        .route("/post/{slug}/delete", get(delete_post))
         .route("/posts", get(view_posts))
         .route("/posts/new", get(view_new_post).post(post_new_post))
 }
@@ -84,6 +85,25 @@ async fn post_new_post(
         Err(err) => Response::builder()
             .status(StatusCode::INTERNAL_SERVER_ERROR)
             .body(Body::from(format!("{err:?}")))
+            .unwrap(),
+    }
+}
+
+#[axum::debug_handler]
+async fn delete_post(
+    app_state: State<Arc<AppState>>,
+    Path(slug): Path<String>,
+) -> impl IntoResponse {
+    let query = sqlx::query!("DELETE FROM Posts WHERE slug = $1 RETURNING slug", slug)
+        .fetch_optional(&app_state.db_pool)
+        .await
+        .unwrap();
+
+    match query {
+        Some(_) => Redirect::to("/posts").into_response(),
+        None => Response::builder()
+            .status(StatusCode::NOT_FOUND)
+            .body(Body::empty())
             .unwrap(),
     }
 }

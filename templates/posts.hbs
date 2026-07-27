@@ -2,8 +2,9 @@
 <table id="post-table">
     {{#each posts}}
     <tr>
-       <th class="title"><a href="/post/{{slug}}">{{title}}</a></th>
-       <th class="uuid">{{uuid}}</th>
+        <th class="title"><a href="/post/{{slug}}">{{title}}</a></th>
+        <th class="uuid">{{uuid}}</th>
+        <th class="delete"><a href="/post/{{slug}}/delete">Delete</a></th>
     </tr>
     {{/each}}
 </table>
