@@ -11,4 +11,4 @@ See [`chronicle.md`](docs/chronicle.md)
  - [ ] remove is_published flag, rename date_published to published, check if null for unpublished
  - [ ] (?) Rewrite slug function in python or some other language in the database
  - [ ] Authenticate: new posts, delete posts, publish posts
- - [ ] Fix Slugs getting new superflous suffix when publishing
+ - [X] Fix Slugs getting new superflous suffix when publishing
