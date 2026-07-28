@@ -2,10 +2,19 @@
 <table id="post-table">
     {{#each posts}}
     <tr>
+
         <th class="title"><a href="/post/{{slug}}">{{title}}</a></th>
-        <th class="timestamp">{{#if published}}{{published}}{{else}}<a href="/post/{{slug}}/publish">Publish</a>{{/if}}</th>
-        <th class="uuid">{{uuid}}</th>
+
+        <th class="timestamp">
+            {{#if published}}
+            <time datetime="{{published}}">{{published}}</time>
+            {{else}}
+            <a href="/post/{{slug}}/publish">Publish</a>
+            {{/if}}</th>
+        <th class="uuid"><span>{{uuid}}</span></th>
+
         <th class="delete"><a href="/post/{{slug}}/delete">Delete</a></th>
+
     </tr>
     {{/each}}
 </table>

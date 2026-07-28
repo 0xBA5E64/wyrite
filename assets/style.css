@@ -4,13 +4,42 @@ body {
     display: flex;
     justify-content: center;
 
-    background: #DDD;
+    background: #EEE;
     font-family: sans-serif;
 }
 
+header {
+    display: flex;
+    justify-content: space-between;
+    margin: 32px 0;
+}
+
+header nav {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-end;
+}
+
+header nav a {
+    display: inline-block;
+    margin: 4px;
+}
+
+header nav a:before {
+    content: "[ ";
+    color: #444;
+}
+
+header nav a:after {
+    content: " ]";
+    color: #444;
+}
+
 a {
+    color: #46B;
     text-decoration: none;
-    font-weight: bold;;
+    font-weight: bold;
 }
 
 #page {
@@ -24,28 +53,83 @@ a {
     border-collapse: collapse;
 }
 
-#post-table tr > * {
-    padding: 8px 24px;
+#post-table tr {
+    border-collapse: separate;
+    border: #0006 solid;
+    border-width: 1px 0;
 }
 
-#post-table tr:nth-child(odd) {
+
+#post-table tr:hover {
  background-color: #0001;
 }
 
-#post-table tr:nth-child(even) {
- background-color: #0002;
+#post-table tr > * {
+    padding: 6px 12px;
+    width: 0;
+    white-space: nowrap;
 }
 
 #post-table .title {
     text-align: left;
+    width: max-content;
+}
+
+#post-table .title a {
+    display: block;
 }
 
 #post-table .uuid {
     text-align: right;
     font-family: monospace;
-    opacity: 0.5;
+}
+
+#post-table .uuid span {
+    display: inline-block;
+    border-radius: 4px;
+    background: #AAA8;
+    color: #0008;
+    padding: 1px 8px;
 }
 
 #post-title {
     font-size: 2.5em;
+}
+
+form#post-editor {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+form#post-editor input.title {
+    margin: 4px;
+    padding: 16px;
+    font-size: 20px;
+    font-weight: bold;
+    border-radius: 4px;
+    border: none;
+    outline: none;
+}
+
+form#post-editor textarea {
+    resize: vertical;
+    height: 120px;
+    margin: 4px;
+    padding: 8px;
+    border-radius: 4px;
+    border: solid 1px #888;
+    outline: none;
+}
+
+form#post-editor input.submit {
+    background: #666;
+    border-radius: 4px;
+    border: 0;
+    margin: 4px;
+    color: #EEE;
+    font-weight: bold;
+    text-transform: uppercase;
+    padding: 16px;
+    cursor: pointer;
 }

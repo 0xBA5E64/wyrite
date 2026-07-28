@@ -8,13 +8,17 @@
 </head>
 <body>
     <div id="page">
-    <img src="/assets/logo.png" style="filter: invert(1); opacity: 0.8;" alt="wyrite">
-    <nav>
-        <a href="/">Home</a> /
-        <a href="/posts">Posts</a>
-    </nav>
-    <div id="content">
-        {{> inside}}
+        <header>
+            <img src="/assets/logo.png" style="filter: invert(1); opacity: 0.8;" alt="wyrite">
+            <nav>
+                <a href="/">Home</a>
+                <a href="/posts">Post Index</a>
+                <a href="/posts/new">New Post</a>
+            </nav>
+        </header>
+        <div id="content">
+            {{> inside}}
+        </div>
     </div>
 </body>
 </html>

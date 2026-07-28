@@ -16,8 +16,9 @@ pub fn get_routes() -> axum::Router<Arc<AppState>> {
         .route("/post/{slug}", get(view_post))
         .route("/post/{slug}/delete", get(delete_post))
         .route("/post/{slug}/publish", get(publish_post))
+        .route("/post/{slug}/edit", get(edit_post).post(post_edit_post))
         .route("/posts", get(view_posts))
-        .route("/posts/new", get(view_new_post).post(post_new_post))
+        .route("/posts/new", get(edit_new_post).post(post_new_post))
 }
 
 #[axum::debug_handler]
@@ -58,8 +59,8 @@ async fn view_posts(app_state: State<Arc<AppState>>) -> impl IntoResponse {
     Html(app_state.templates.render("posts", data).unwrap())
 }
 
-async fn view_new_post(app_state: State<Arc<AppState>>) -> impl IntoResponse {
-    Html(app_state.templates.render("new_post", &json!({})).unwrap())
+async fn edit_new_post(app_state: State<Arc<AppState>>) -> impl IntoResponse {
+    Html(app_state.templates.render("edit_post", &json!({})).unwrap())
 }
 
 #[derive(Deserialize)]
@@ -77,6 +78,51 @@ async fn post_new_post(
         "INSERT INTO Posts (title, body) VALUES ($1, $2) RETURNING slug",
         new_post.title,
         new_post.body
+    )
+    .fetch_one(&app_state.db_pool)
+    .await;
+
+    match new_post {
+        Ok(slug) => Redirect::to(format!("/post/{}", slug.slug).as_str()).into_response(),
+        Err(err) => Response::builder()
+            .status(StatusCode::INTERNAL_SERVER_ERROR)
+            .body(Body::from(format!("{err:?}")))
+            .unwrap(),
+    }
+}
+
+async fn edit_post(app_state: State<Arc<AppState>>, Path(slug): Path<String>) -> impl IntoResponse {
+    let post = sqlx::query_as!(wyrite::Post, "SELECT * FROM posts WHERE slug = $1", slug)
+        .fetch_optional(&app_state.db_pool)
+        .await
+        .unwrap();
+
+    match post {
+        Some(post) => Html(
+            app_state
+                .templates
+                .render("edit_post", &json!({"post": post}))
+                .unwrap(),
+        )
+        .into_response(),
+        None => Response::builder()
+            .status(StatusCode::INTERNAL_SERVER_ERROR)
+            .body(Body::empty())
+            .unwrap(),
+    }
+}
+
+#[axum::debug_handler]
+async fn post_edit_post(
+    app_state: State<Arc<AppState>>,
+    Path(slug): Path<String>,
+    Form(new_post): Form<NewPost>,
+) -> impl IntoResponse {
+    let new_post = sqlx::query!(
+        "UPDATE Posts SET title = $1, body = $2 WHERE slug = $3 RETURNING slug",
+        new_post.title,
+        new_post.body,
+        slug
     )
     .fetch_one(&app_state.db_pool)
     .await;
