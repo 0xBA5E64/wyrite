@@ -23,18 +23,26 @@ pub fn get_routes() -> axum::Router<Arc<AppState>> {
 #[axum::debug_handler]
 async fn view_home(app_state: State<Arc<AppState>>) -> impl IntoResponse {
     WebResponse::new("index", app_state)
-        .add_context("title", json!("Hello World"))
-        .add_context("body", json!("Welcome to wyrite"))
+        .add_context("title", "Hello World")
+        .add_context("body", "Welcome to wyrite")
 }
 
 #[axum::debug_handler]
 async fn view_post(app_state: State<Arc<AppState>>, Path(slug): Path<String>) -> impl IntoResponse {
-    let post = sqlx::query_as!(wyrite::Post, "SELECT * FROM posts WHERE slug = $1", slug)
+    let query = sqlx::query_as!(wyrite::Post, "SELECT * FROM posts WHERE slug = $1", slug)
         .fetch_optional(&app_state.db_pool)
         .await
         .unwrap();
 
-    WebResponse::new("post", app_state).add_context("post", json!(post))
+    match query {
+        Some(post) => WebResponse::new("post", app_state)
+            .add_context("post", json!(post))
+            .into_response(),
+        None => Response::builder()
+            .status(StatusCode::NOT_FOUND)
+            .body(Body::empty())
+            .unwrap(), // TODO: Proper error type
+    }
 }
 
 #[axum::debug_handler]

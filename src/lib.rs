@@ -82,9 +82,9 @@ impl<'a> WebResponse<'a> {
             context: json!({}),
         }
     }
-    pub fn add_context(mut self, key: &str, value: serde_json::Value) -> Self {
+    pub fn add_context(mut self, key: &str, value: impl Into<serde_json::Value>) -> Self {
         if let Some(context) = self.context.as_object_mut() {
-            context.insert(key.to_string(), value);
+            context.insert(key.to_string(), value.into());
         }
         self
     }
