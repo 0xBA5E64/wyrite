@@ -22,7 +22,7 @@ pub fn get_routes() -> axum::Router<Arc<AppState>> {
 
 #[axum::debug_handler]
 async fn view_home(app_state: State<Arc<AppState>>) -> impl IntoResponse {
-    WebResponse::new("index", app_state.0)
+    WebResponse::new("index", app_state)
         .add_context("title", json!("Hello World"))
         .add_context("body", json!("Welcome to wyrite"))
 }
@@ -34,7 +34,7 @@ async fn view_post(app_state: State<Arc<AppState>>, Path(slug): Path<String>) ->
         .await
         .unwrap();
 
-    WebResponse::new("post", app_state.0).add_context("post", json!(post))
+    WebResponse::new("post", app_state).add_context("post", json!(post))
 }
 
 #[axum::debug_handler]
@@ -44,11 +44,11 @@ async fn view_posts(app_state: State<Arc<AppState>>) -> impl IntoResponse {
         .await
         .unwrap();
 
-    WebResponse::new("posts", app_state.0).add_context("posts", json!(posts))
+    WebResponse::new("posts", app_state).add_context("posts", json!(posts))
 }
 
 async fn edit_new_post(app_state: State<Arc<AppState>>) -> impl IntoResponse {
-    WebResponse::new("edit_post", app_state.0)
+    WebResponse::new("edit_post", app_state)
 }
 
 #[axum::debug_handler]
@@ -80,7 +80,7 @@ async fn edit_post(app_state: State<Arc<AppState>>, Path(slug): Path<String>) ->
         .unwrap();
 
     match post {
-        Some(post) => WebResponse::new("edit_post", app_state.0)
+        Some(post) => WebResponse::new("edit_post", app_state)
             .add_context("post", json!(post))
             .into_response(),
         None => Response::builder()

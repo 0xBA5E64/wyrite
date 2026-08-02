@@ -2,6 +2,7 @@ use std::{net::Ipv4Addr, str::FromStr, sync::Arc};
 
 use axum::{
     body::Body,
+    extract::State,
     http::{header, Response, StatusCode},
     response::IntoResponse,
 };
@@ -68,12 +69,12 @@ pub struct PostInsert {
 pub struct WebResponse<'a> {
     status: StatusCode,
     template: &'a str,
-    app_state: Arc<AppState>,
+    app_state: State<Arc<AppState>>,
     context: serde_json::Value,
 }
 
 impl<'a> WebResponse<'a> {
-    pub fn new(template: &'a str, app_state: Arc<AppState>) -> Self {
+    pub fn new(template: &'a str, app_state: State<Arc<AppState>>) -> Self {
         Self {
             status: StatusCode::OK,
             template,
