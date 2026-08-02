@@ -3,12 +3,11 @@ use std::sync::Arc;
 use axum::body::Body;
 use axum::extract::{Path, State};
 use axum::http::{Response, StatusCode};
-use axum::response::{Html, IntoResponse, Redirect};
+use axum::response::{IntoResponse, Redirect};
 use axum::routing::get;
 use axum::Form;
-use serde::Deserialize;
 use serde_json::json;
-use wyrite::AppState;
+use wyrite::{AppState, PostInsert, WebResponse};
 
 pub fn get_routes() -> axum::Router<Arc<AppState>> {
     axum::Router::new()
@@ -23,12 +22,9 @@ pub fn get_routes() -> axum::Router<Arc<AppState>> {
 
 #[axum::debug_handler]
 async fn view_home(app_state: State<Arc<AppState>>) -> impl IntoResponse {
-    let data = &json!({
-        "title": "Hello World",
-        "body": "Welcome to wyrite"
-    });
-
-    Html(app_state.templates.render("index", data).unwrap())
+    WebResponse::new("index", app_state.0)
+        .add_context("title", json!("Hello World"))
+        .add_context("body", json!("Welcome to wyrite"))
 }
 
 #[axum::debug_handler]
@@ -38,11 +34,7 @@ async fn view_post(app_state: State<Arc<AppState>>, Path(slug): Path<String>) ->
         .await
         .unwrap();
 
-    let data = &json!({
-        "post": post
-    });
-
-    Html(app_state.templates.render("post", data).unwrap())
+    WebResponse::new("post", app_state.0).add_context("post", json!(post))
 }
 
 #[axum::debug_handler]
@@ -52,27 +44,17 @@ async fn view_posts(app_state: State<Arc<AppState>>) -> impl IntoResponse {
         .await
         .unwrap();
 
-    let data = &json!({
-        "posts": posts
-    });
-
-    Html(app_state.templates.render("posts", data).unwrap())
+    WebResponse::new("posts", app_state.0).add_context("posts", json!(posts))
 }
 
 async fn edit_new_post(app_state: State<Arc<AppState>>) -> impl IntoResponse {
-    Html(app_state.templates.render("edit_post", &json!({})).unwrap())
-}
-
-#[derive(Deserialize)]
-struct NewPost {
-    title: String,
-    body: String,
+    WebResponse::new("edit_post", app_state.0)
 }
 
 #[axum::debug_handler]
 async fn post_new_post(
     app_state: State<Arc<AppState>>,
-    Form(new_post): Form<NewPost>,
+    Form(new_post): Form<PostInsert>,
 ) -> impl IntoResponse {
     let new_post = sqlx::query!(
         "INSERT INTO Posts (title, body) VALUES ($1, $2) RETURNING slug",
@@ -98,13 +80,9 @@ async fn edit_post(app_state: State<Arc<AppState>>, Path(slug): Path<String>) ->
         .unwrap();
 
     match post {
-        Some(post) => Html(
-            app_state
-                .templates
-                .render("edit_post", &json!({"post": post}))
-                .unwrap(),
-        )
-        .into_response(),
+        Some(post) => WebResponse::new("edit_post", app_state.0)
+            .add_context("post", json!(post))
+            .into_response(),
         None => Response::builder()
             .status(StatusCode::INTERNAL_SERVER_ERROR)
             .body(Body::empty())
@@ -116,7 +94,7 @@ async fn edit_post(app_state: State<Arc<AppState>>, Path(slug): Path<String>) ->
 async fn post_edit_post(
     app_state: State<Arc<AppState>>,
     Path(slug): Path<String>,
-    Form(new_post): Form<NewPost>,
+    Form(new_post): Form<PostInsert>,
 ) -> impl IntoResponse {
     let new_post = sqlx::query!(
         "UPDATE Posts SET title = $1, body = $2 WHERE slug = $3 RETURNING slug",

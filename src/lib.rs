@@ -1,6 +1,12 @@
-use std::{net::Ipv4Addr, str::FromStr};
+use std::{net::Ipv4Addr, str::FromStr, sync::Arc};
 
+use axum::{
+    body::Body,
+    http::{header, Response, StatusCode},
+    response::IntoResponse,
+};
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 use uuid::Uuid;
 
 pub struct AppState {
@@ -57,4 +63,44 @@ pub struct Post {
 pub struct PostInsert {
     pub title: String,
     pub body: String,
+}
+
+pub struct WebResponse<'a> {
+    status: StatusCode,
+    template: &'a str,
+    app_state: Arc<AppState>,
+    context: serde_json::Value,
+}
+
+impl<'a> WebResponse<'a> {
+    pub fn new(template: &'a str, app_state: Arc<AppState>) -> Self {
+        Self {
+            status: StatusCode::OK,
+            template,
+            app_state,
+            context: json!({}),
+        }
+    }
+    pub fn add_context(mut self, key: &str, value: serde_json::Value) -> Self {
+        if let Some(context) = self.context.as_object_mut() {
+            context.insert(key.to_string(), value);
+        }
+        self
+    }
+}
+
+impl<'a> IntoResponse for WebResponse<'a> {
+    fn into_response(self) -> axum::response::Response {
+        let render = self
+            .app_state
+            .templates
+            .render(self.template, &self.context)
+            .unwrap();
+
+        Response::builder()
+            .status(self.status)
+            .header(header::CONTENT_TYPE, "text/html; charset=utf-8")
+            .body(Body::new(render))
+            .unwrap()
+    }
 }
