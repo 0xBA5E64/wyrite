@@ -1,13 +1,15 @@
 use std::sync::Arc;
 
-use axum::body::Body;
-use axum::extract::{Path, State};
-use axum::http::{Response, StatusCode};
-use axum::response::{IntoResponse, Redirect};
-use axum::routing::get;
-use axum::Form;
+use axum::{
+    body::Body,
+    extract::{Path, State},
+    http::{Response, StatusCode},
+    response::{IntoResponse, Redirect},
+    routing::get,
+    Form,
+};
 use serde_json::json;
-use wyrite::{AppState, PostInsert, WebResponse};
+use wyrite::{AppState, PostInsert, WebError, WebResponse};
 
 pub fn get_routes() -> axum::Router<Arc<AppState>> {
     axum::Router::new()
@@ -28,13 +30,16 @@ async fn view_home(app_state: State<Arc<AppState>>) -> impl IntoResponse {
 }
 
 #[axum::debug_handler]
-async fn view_post(app_state: State<Arc<AppState>>, Path(slug): Path<String>) -> impl IntoResponse {
+async fn view_post(
+    app_state: State<Arc<AppState>>,
+    Path(slug): Path<String>,
+) -> Result<impl IntoResponse, WebError> {
     let query = sqlx::query_as!(wyrite::Post, "SELECT * FROM posts WHERE slug = $1", slug)
         .fetch_optional(&app_state.db_pool)
         .await
-        .unwrap();
+        .map_err(WebError::GetPost)?;
 
-    match query {
+    Ok(match query {
         Some(post) => WebResponse::new("post", app_state)
             .add_context("post", json!(post))
             .into_response(),
@@ -42,17 +47,19 @@ async fn view_post(app_state: State<Arc<AppState>>, Path(slug): Path<String>) ->
             .status(StatusCode::NOT_FOUND)
             .body(Body::empty())
             .unwrap(), // TODO: Proper error type
-    }
+    })
 }
 
 #[axum::debug_handler]
-async fn view_posts(app_state: State<Arc<AppState>>) -> impl IntoResponse {
+async fn view_posts(app_state: State<Arc<AppState>>) -> Result<impl IntoResponse, WebError> {
     let posts = sqlx::query_as!(wyrite::Post, "SELECT * FROM posts")
         .fetch_all(&app_state.db_pool)
         .await
-        .unwrap();
+        .map_err(WebError::GetPostList)?;
 
-    WebResponse::new("posts", app_state).add_context("posts", json!(posts))
+    Ok(WebResponse::new("posts", app_state)
+        .add_context("posts", json!(posts))
+        .into_response())
 }
 
 async fn edit_new_post(app_state: State<Arc<AppState>>) -> impl IntoResponse {
@@ -63,39 +70,37 @@ async fn edit_new_post(app_state: State<Arc<AppState>>) -> impl IntoResponse {
 async fn post_new_post(
     app_state: State<Arc<AppState>>,
     Form(new_post): Form<PostInsert>,
-) -> impl IntoResponse {
+) -> Result<impl IntoResponse, WebError> {
     let new_post = sqlx::query!(
         "INSERT INTO Posts (title, body) VALUES ($1, $2) RETURNING slug",
         new_post.title,
         new_post.body
     )
     .fetch_one(&app_state.db_pool)
-    .await;
+    .await
+    .map_err(WebError::NewPost)?;
 
-    match new_post {
-        Ok(slug) => Redirect::to(format!("/post/{}", slug.slug).as_str()).into_response(),
-        Err(err) => Response::builder()
-            .status(StatusCode::INTERNAL_SERVER_ERROR)
-            .body(Body::from(format!("{err:?}")))
-            .unwrap(),
-    }
+    Ok(Redirect::to(format!("/post/{}", new_post.slug).as_str()).into_response())
 }
 
-async fn edit_post(app_state: State<Arc<AppState>>, Path(slug): Path<String>) -> impl IntoResponse {
-    let post = sqlx::query_as!(wyrite::Post, "SELECT * FROM posts WHERE slug = $1", slug)
+async fn edit_post(
+    app_state: State<Arc<AppState>>,
+    Path(slug): Path<String>,
+) -> Result<impl IntoResponse, WebError> {
+    let query = sqlx::query_as!(wyrite::Post, "SELECT * FROM posts WHERE slug = $1", slug)
         .fetch_optional(&app_state.db_pool)
         .await
-        .unwrap();
+        .map_err(WebError::EditPost)?;
 
-    match post {
+    Ok(match query {
         Some(post) => WebResponse::new("edit_post", app_state)
             .add_context("post", json!(post))
             .into_response(),
         None => Response::builder()
-            .status(StatusCode::INTERNAL_SERVER_ERROR)
+            .status(StatusCode::NOT_FOUND)
             .body(Body::empty())
-            .unwrap(),
-    }
+            .unwrap(), // TODO: Proper error type
+    })
 }
 
 #[axum::debug_handler]
@@ -103,7 +108,7 @@ async fn post_edit_post(
     app_state: State<Arc<AppState>>,
     Path(slug): Path<String>,
     Form(new_post): Form<PostInsert>,
-) -> impl IntoResponse {
+) -> Result<impl IntoResponse, WebError> {
     let new_post = sqlx::query!(
         "UPDATE Posts SET title = $1, body = $2 WHERE slug = $3 RETURNING slug",
         new_post.title,
@@ -111,54 +116,38 @@ async fn post_edit_post(
         slug
     )
     .fetch_one(&app_state.db_pool)
-    .await;
-
-    match new_post {
-        Ok(slug) => Redirect::to(format!("/post/{}", slug.slug).as_str()).into_response(),
-        Err(err) => Response::builder()
-            .status(StatusCode::INTERNAL_SERVER_ERROR)
-            .body(Body::from(format!("{err:?}")))
-            .unwrap(),
-    }
+    .await
+    .map_err(WebError::EditPost)?;
+    // TODO: Handle posts not being valid
+    // TODO-TODO: Post content validation.
+    Ok(Redirect::to(format!("/post/{}", new_post.slug).as_str()).into_response())
 }
 
 #[axum::debug_handler]
 async fn delete_post(
     app_state: State<Arc<AppState>>,
     Path(slug): Path<String>,
-) -> impl IntoResponse {
-    let query = sqlx::query!("DELETE FROM Posts WHERE slug = $1 RETURNING slug", slug)
-        .fetch_optional(&app_state.db_pool)
+) -> Result<impl IntoResponse, WebError> {
+    sqlx::query!("DELETE FROM Posts WHERE slug = $1", slug)
+        .execute(&app_state.db_pool)
         .await
-        .unwrap();
+        .map_err(WebError::DeletePost)?;
 
-    match query {
-        Some(_) => Redirect::to("/posts").into_response(),
-        None => Response::builder()
-            .status(StatusCode::NOT_FOUND)
-            .body(Body::empty())
-            .unwrap(),
-    }
+    Ok(Redirect::to("/posts").into_response())
 }
 
 #[axum::debug_handler]
 async fn publish_post(
     app_state: State<Arc<AppState>>,
     Path(slug): Path<String>,
-) -> impl IntoResponse {
-    let query = sqlx::query!(
-        "UPDATE Posts SET published = current_timestamp(0) WHERE slug = $1 RETURNING slug",
+) -> Result<impl IntoResponse, WebError> {
+    sqlx::query!(
+        "UPDATE Posts SET published = current_timestamp(0) WHERE slug = $1",
         slug
     )
-    .fetch_optional(&app_state.db_pool)
+    .execute(&app_state.db_pool)
     .await
-    .unwrap();
+    .map_err(WebError::PublishPost)?;
 
-    match query {
-        Some(_) => Redirect::to("/posts").into_response(),
-        None => Response::builder()
-            .status(StatusCode::NOT_FOUND)
-            .body(Body::empty())
-            .unwrap(),
-    }
+    Ok(Redirect::to("/posts").into_response())
 }

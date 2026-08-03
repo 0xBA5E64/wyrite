@@ -8,6 +8,7 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use serde_json::json;
+use thiserror::Error;
 use uuid::Uuid;
 
 pub struct AppState {
@@ -66,6 +67,22 @@ pub struct PostInsert {
     pub body: String,
 }
 
+#[derive(Error, Debug)]
+pub enum WebError {
+    #[error("Unable to find post: {0}")]
+    GetPost(sqlx::Error),
+    #[error("Unable to get post list: {0}")]
+    GetPostList(sqlx::Error),
+    #[error("Error inserting new post: {0}")]
+    NewPost(sqlx::Error),
+    #[error("Error editing post: {0}")]
+    EditPost(sqlx::Error),
+    #[error("Error deleting post: {0}")]
+    DeletePost(sqlx::Error),
+    #[error("Error publishing post: {0}")]
+    PublishPost(sqlx::Error),
+}
+
 pub struct WebResponse<'a> {
     status: StatusCode,
     template: &'a str,
@@ -102,6 +119,21 @@ impl<'a> IntoResponse for WebResponse<'a> {
             .status(self.status)
             .header(header::CONTENT_TYPE, "text/html; charset=utf-8")
             .body(Body::new(render))
+            .unwrap()
+    }
+}
+
+impl IntoResponse for WebError {
+    fn into_response(self) -> axum::response::Response {
+        //let render = self
+        //    .app_state
+        //    .templates
+        //    .render(self.template, &self.context)
+        //    .unwrap();
+
+        Response::builder()
+            .status(500)
+            .body(Body::new(self.to_string()))
             .unwrap()
     }
 }
