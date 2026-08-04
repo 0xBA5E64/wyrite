@@ -12,6 +12,7 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use serde_json::json;
+use sqlx::postgres::PgPoolOptions;
 use thiserror::Error;
 use uuid::Uuid;
 
@@ -24,7 +25,7 @@ use handlebars::{DirectorySourceOptions, Handlebars};
 
 impl AppState {
     pub async fn new() -> Self {
-        let db_pool = sqlx::postgres::PgPoolOptions::new()
+        let db_pool = PgPoolOptions::new()
             .max_connections(4)
             .connect(
                 std::env::var("DATABASE_URL")
@@ -32,7 +33,7 @@ impl AppState {
                     .as_str(),
             )
             .await
-            .expect("no bueno deebee");
+            .expect("Unable to establish Database connection pool");
 
         let host: IpAddr = IpAddr::from_str(
             std::env::var("HOST")

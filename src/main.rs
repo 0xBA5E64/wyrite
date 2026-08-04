@@ -9,7 +9,7 @@ mod routes;
 
 #[tokio::main]
 async fn main() {
-    dotenv().expect(".env file not found");
+    dotenv().ok();
 
     let app_state = Arc::new(AppState::new().await);
 
