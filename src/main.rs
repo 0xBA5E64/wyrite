@@ -1,3 +1,4 @@
+#![warn(clippy::pedantic)]
 use std::sync::Arc;
 
 use axum::Router;
@@ -11,7 +12,7 @@ mod routes;
 async fn main() {
     dotenv().ok();
 
-    let app_state = Arc::new(AppState::new().await);
+    let app_state = Arc::new(AppState::new().await.unwrap());
 
     // Run Database migrations
     sqlx::migrate!()

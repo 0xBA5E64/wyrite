@@ -1,3 +1,4 @@
+#![warn(clippy::pedantic)]
 use std::{
     net::{IpAddr, SocketAddr},
     str::FromStr,
@@ -16,6 +17,20 @@ use sqlx::postgres::PgPoolOptions;
 use thiserror::Error;
 use uuid::Uuid;
 
+#[derive(Error, Debug)]
+pub enum AppStateError {
+    #[error("Unable to obtain DATABASE_URL from enviroument: {0}")]
+    DatabaseConnectionUrl(std::env::VarError),
+    #[error("Unable to establish Database connection pool: {0}")]
+    DatabaseConnection(sqlx::Error),
+    #[error("Unable to parse specified HOST as valid IP: {0}")]
+    HostParse(std::net::AddrParseError),
+    #[error("Unable to parse specified POST as valid integer: {0}")]
+    PortParse(std::num::ParseIntError),
+    #[error("Unable to register Handlebars templates: {0}")]
+    HandlebarsRegistration(handlebars::TemplateError),
+}
+
 pub struct AppState {
     pub socket: SocketAddr,
     pub templates: Handlebars<'static>,
@@ -23,41 +38,42 @@ pub struct AppState {
 }
 use handlebars::{DirectorySourceOptions, Handlebars};
 
+#[allow(clippy::missing_errors_doc)]
 impl AppState {
-    pub async fn new() -> Self {
+    pub async fn new() -> Result<Self, AppStateError> {
         let db_pool = PgPoolOptions::new()
             .max_connections(4)
             .connect(
                 std::env::var("DATABASE_URL")
-                    .expect("No DATABASE_URL Specified in environment")
+                    .map_err(AppStateError::DatabaseConnectionUrl)?
                     .as_str(),
             )
             .await
-            .expect("Unable to establish Database connection pool");
+            .map_err(AppStateError::DatabaseConnection)?;
 
         let host: IpAddr = IpAddr::from_str(
             std::env::var("HOST")
                 .unwrap_or("0.0.0.0".to_string())
                 .as_str(),
         )
-        .unwrap();
+        .map_err(AppStateError::HostParse)?;
         let port: u16 = std::env::var("PORT")
             .unwrap_or("3000".to_string())
             .parse()
-            .unwrap();
+            .map_err(AppStateError::PortParse)?;
         let socket = SocketAddr::new(host, port);
 
         let mut templates = Handlebars::new();
         templates.set_dev_mode(cfg!(debug_assertions));
         templates
             .register_templates_directory("templates/", DirectorySourceOptions::default())
-            .unwrap();
+            .map_err(AppStateError::HandlebarsRegistration)?;
 
-        AppState {
+        Ok(AppState {
             socket,
-            db_pool,
             templates,
-        }
+            db_pool,
+        })
     }
 }
 
@@ -101,6 +117,7 @@ pub struct WebResponse<'a> {
 }
 
 impl<'a> WebResponse<'a> {
+    #[must_use]
     pub fn new(template: &'a str, app_state: State<Arc<AppState>>) -> Self {
         Self {
             status: StatusCode::OK,
@@ -109,6 +126,7 @@ impl<'a> WebResponse<'a> {
             context: json!({}),
         }
     }
+    #[must_use]
     pub fn add_context(mut self, key: &str, value: impl Into<serde_json::Value>) -> Self {
         if let Some(context) = self.context.as_object_mut() {
             context.insert(key.to_string(), value.into());
@@ -117,7 +135,7 @@ impl<'a> WebResponse<'a> {
     }
 }
 
-impl<'a> IntoResponse for WebResponse<'a> {
+impl IntoResponse for WebResponse<'_> {
     fn into_response(self) -> axum::response::Response {
         let render = self
             .app_state
