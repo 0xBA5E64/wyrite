@@ -5,8 +5,9 @@ Chronicling my long-running quest of figuring out how to build a functioning blo
 See [`chronicle.md`](docs/chronicle.md)
 
 ## todo:
- - [ ] Web: Unify HTTP/HTML response handling, both OK and Error
- - [ ] Better error-management with ThisError
+ - [X] Web: Unify HTTP/HTML response handling, both OK and Error
+   - [ ] Style web error pages 
+ - [X] Better error-management with ThisError
  - [ ] Web: Auth
    - [ ] Implement Authentication middleware
    - [ ] Implement JWT
