@@ -19,8 +19,9 @@ async fn main() {
         .await
         .expect("Migrations Failed");
 
-    let host = app_state.host;
-    let port: u16 = std::env::var("PORT").unwrap().parse().unwrap();
+    let listener = tokio::net::TcpListener::bind(&app_state.socket)
+        .await
+        .unwrap();
 
     let app = Router::new()
         .merge(routes::web::get_routes())
@@ -28,8 +29,6 @@ async fn main() {
         .nest_service("/assets", ServeDir::new("assets"))
         .with_state(app_state);
 
-    let listener = tokio::net::TcpListener::bind(format!("{host}:{port}"))
-        .await
-        .unwrap();
+    println!("Serving to http://{}/", listener.local_addr().unwrap());
     axum::serve(listener, app).await.unwrap();
 }

@@ -1,4 +1,8 @@
-use std::{net::Ipv4Addr, str::FromStr, sync::Arc};
+use std::{
+    net::{IpAddr, SocketAddr},
+    str::FromStr,
+    sync::Arc,
+};
 
 use axum::{
     body::Body,
@@ -12,7 +16,7 @@ use thiserror::Error;
 use uuid::Uuid;
 
 pub struct AppState {
-    pub host: Ipv4Addr,
+    pub socket: SocketAddr,
     pub templates: Handlebars<'static>,
     pub db_pool: sqlx::Pool<sqlx::Postgres>,
 }
@@ -30,12 +34,17 @@ impl AppState {
             .await
             .expect("no bueno deebee");
 
-        let host: Ipv4Addr = Ipv4Addr::from_str(
+        let host: IpAddr = IpAddr::from_str(
             std::env::var("HOST")
                 .unwrap_or("0.0.0.0".to_string())
                 .as_str(),
         )
         .unwrap();
+        let port: u16 = std::env::var("PORT")
+            .unwrap_or("3000".to_string())
+            .parse()
+            .unwrap();
+        let socket = SocketAddr::new(host, port);
 
         let mut templates = Handlebars::new();
         templates.set_dev_mode(cfg!(debug_assertions));
@@ -44,9 +53,9 @@ impl AppState {
             .unwrap();
 
         AppState {
+            socket,
             db_pool,
             templates,
-            host,
         }
     }
 }
