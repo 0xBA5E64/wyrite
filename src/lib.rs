@@ -117,6 +117,8 @@ pub struct WebResponse<'a> {
 }
 
 impl<'a> WebResponse<'a> {
+    /// Construct a new `WebResponse` instance.
+    /// Use as a builder and call `.set_status()` / `.add_context()` to flesh out the response.
     #[must_use]
     pub fn new(template: &'a str, app_state: State<Arc<AppState>>) -> Self {
         Self {
@@ -126,12 +128,26 @@ impl<'a> WebResponse<'a> {
             context: json!({}),
         }
     }
+    /// Set the response status code to something other than the default 200
+    #[must_use]
+    pub fn set_status(mut self, status_code: StatusCode) -> Self {
+        self.status = status_code;
+        self
+    }
+    /// Append additional context to the response for use in the template
     #[must_use]
     pub fn add_context(mut self, key: &str, value: impl Into<serde_json::Value>) -> Self {
         if let Some(context) = self.context.as_object_mut() {
             context.insert(key.to_string(), value.into());
         }
         self
+    }
+    /// Shortcut method for constructing error response
+    #[must_use]
+    pub fn new_error(app_state: State<Arc<AppState>>, error: &WebError) -> Self {
+        Self::new("error", app_state)
+            .set_status(StatusCode::INTERNAL_SERVER_ERROR)
+            .add_context("err_msg", json!(error.to_string()))
     }
 }
 
@@ -147,21 +163,6 @@ impl IntoResponse for WebResponse<'_> {
             .status(self.status)
             .header(header::CONTENT_TYPE, "text/html; charset=utf-8")
             .body(Body::new(render))
-            .unwrap()
-    }
-}
-
-impl IntoResponse for WebError {
-    fn into_response(self) -> axum::response::Response {
-        //let render = self
-        //    .app_state
-        //    .templates
-        //    .render(self.template, &self.context)
-        //    .unwrap();
-
-        Response::builder()
-            .status(500)
-            .body(Body::new(self.to_string()))
             .unwrap()
     }
 }
