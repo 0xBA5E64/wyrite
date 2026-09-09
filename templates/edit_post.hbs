@@ -1,8 +1,0 @@
-{{#* inline "inside"}}
-<form id="post-editor" action="{{#if post}}/post/{{post.slug}}/edit{{else}}/posts/new{{/if}}" method="post">
-    <input class="title" type="text" name="title" required="true" placeholder="Post title" value="{{post.title}}">
-    <textarea type="text" name="body" placeholder="Post contents">{{{post.body}}}</textarea>
-    <input class="submit" type="submit" value="Submit">
-</form>
-{{/inline}}
-{{> base}}

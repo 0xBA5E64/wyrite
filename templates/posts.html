@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block inside %}
+<table id="post-table">
+    {% for post in posts %}
+    <tr>
+
+        <th class="title"><a href="/post/{{post.slug}}">{{post.title}}</a></th>
+
+        <th class="timestamp">
+            {% if let Some(published) = post.published %}
+            <time datetime="{{published}}">{{published}}</time>
+            {% else %}
+            <a href="/post/{{post.slug}}/publish">Publish</a>
+            {% endif %}
+        </th>
+        <th class="uuid"><span>{{post.uuid}}</span></th>
+
+        <th class="delete"><a href="/post/{{post.slug}}/delete">Delete</a></th>
+
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}

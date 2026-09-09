@@ -1,15 +1,16 @@
 #![warn(clippy::pedantic)]
 use std::sync::Arc;
 
+use askama::Template;
 use axum::{
     extract::{Path, State},
-    http::StatusCode,
-    response::{IntoResponse, Redirect},
+    response::{Html, IntoResponse, Redirect},
     routing::get,
     Form,
 };
-use serde_json::json;
-use wyrite::{AppState, PostInsert, WebError, WebResponse};
+use wyrite::{AppState, PostInsert, WebError};
+
+use crate::routes::web_templates;
 
 pub fn get_routes() -> axum::Router<Arc<AppState>> {
     axum::Router::new()
@@ -23,10 +24,15 @@ pub fn get_routes() -> axum::Router<Arc<AppState>> {
 }
 
 #[axum::debug_handler]
-async fn view_home(app_state: State<Arc<AppState>>) -> impl IntoResponse {
-    WebResponse::new("index", app_state)
-        .add_context("title", "Hello World")
-        .add_context("body", "Welcome to wyrite")
+async fn view_home() -> impl IntoResponse {
+    Html(
+        web_templates::Index {
+            title: "Hello from Askama",
+            body: "This is a Askama template",
+        }
+        .render()
+        .unwrap(),
+    )
 }
 
 #[axum::debug_handler]
@@ -38,12 +44,10 @@ async fn view_post(app_state: State<Arc<AppState>>, Path(slug): Path<String>) ->
 
     match query {
         Ok(query) => match query {
-            Some(post) => WebResponse::new("post", app_state).add_context("post", json!(post)),
-            None => WebResponse::new("error", app_state)
-                .set_status(StatusCode::NOT_FOUND)
-                .add_context("err_msg", json!("Post not found")),
+            Some(post) => Html(web_templates::Post { post: &post }.render().unwrap()),
+            None => todo!(),
         },
-        Err(error) => WebResponse::new_error(app_state, &error),
+        Err(_error) => todo!(),
     }
 }
 
@@ -55,13 +59,19 @@ async fn view_posts(app_state: State<Arc<AppState>>) -> impl IntoResponse {
         .map_err(WebError::GetPostList);
 
     match query {
-        Ok(posts) => WebResponse::new("posts", app_state).add_context("posts", json!(posts)),
-        Err(error) => WebResponse::new_error(app_state, &error),
+        Ok(posts) => Html(web_templates::Posts { posts: &posts }.render().unwrap()),
+        Err(_error) => todo!(),
     }
 }
 
-async fn edit_new_post(app_state: State<Arc<AppState>>) -> impl IntoResponse {
-    WebResponse::new("edit_post", app_state)
+async fn edit_new_post() -> impl IntoResponse {
+    Html(
+        web_templates::EditPost {
+            post: &Option::None,
+        }
+        .render()
+        .unwrap(),
+    )
 }
 
 #[axum::debug_handler]
@@ -80,7 +90,7 @@ async fn post_new_post(
 
     match query {
         Ok(new_post) => Redirect::to(format!("/post/{}", new_post.slug).as_str()).into_response(),
-        Err(error) => WebResponse::new_error(app_state, &error).into_response(),
+        Err(_error) => todo!(),
     }
 }
 
@@ -92,12 +102,16 @@ async fn edit_post(app_state: State<Arc<AppState>>, Path(slug): Path<String>) ->
 
     match query {
         Ok(query) => match query {
-            Some(post) => WebResponse::new("edit_post", app_state).add_context("post", json!(post)),
-            None => WebResponse::new("error", app_state)
-                .set_status(StatusCode::NOT_FOUND)
-                .add_context("err_msg", json!("Post not found")),
+            Some(post) => Html(
+                web_templates::EditPost {
+                    post: &Option::Some(post),
+                }
+                .render()
+                .unwrap(),
+            ),
+            None => todo!(),
         },
-        Err(error) => WebResponse::new_error(app_state, &error),
+        Err(_error) => todo!(),
     }
 }
 
@@ -120,7 +134,7 @@ async fn post_edit_post(
     // TODO-TODO: Post content validation.
     match query {
         Ok(new_post) => Redirect::to(format!("/post/{}", new_post.slug).as_str()).into_response(),
-        Err(error) => WebResponse::new_error(app_state, &error).into_response(),
+        Err(_error) => todo!(),
     }
 }
 
@@ -136,7 +150,7 @@ async fn delete_post(
 
     match query {
         Ok(_) => Redirect::to("/posts").into_response(),
-        Err(error) => WebResponse::new_error(app_state, &error).into_response(),
+        Err(_error) => todo!(),
     }
 }
 
@@ -155,6 +169,6 @@ async fn publish_post(
 
     match query {
         Ok(_) => Redirect::to("/posts").into_response(),
-        Err(error) => WebResponse::new_error(app_state, &error).into_response(),
+        Err(_error) => todo!(),
     }
 }

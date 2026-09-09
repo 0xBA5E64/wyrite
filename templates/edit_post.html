@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+
+{% block inside %}
+<form id="post-editor" action="{% if let Some(post) = post %}/post/{{post.slug}}/edit{% else %}/posts/new{% endif %}" method="post">
+    <input class="title" type="text" name="title" required="true" placeholder="Post title" value="{% if let Some(post) = post %}{{post.title}}{% endif %}">
+    <textarea type="text" name="body" placeholder="Post contents">{% if let Some(post) = post %}{{post.body}}{% endif %}</textarea>
+    <input class="submit" type="submit" value="Submit">
+</form>
+{% endblock %}
