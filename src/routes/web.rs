@@ -45,9 +45,15 @@ async fn view_post(app_state: State<Arc<AppState>>, Path(slug): Path<String>) ->
     match query {
         Ok(query) => match query {
             Some(post) => Html(web_templates::Post { post: &post }.render().unwrap()),
-            None => todo!(),
+            None => Html(
+                web_templates::NotFound {
+                    error: &format!("Post \"{slug}\" not found"),
+                }
+                .render()
+                .unwrap(),
+            ),
         },
-        Err(_error) => todo!(),
+        Err(error) => Html(web_templates::Error { error: &error }.render().unwrap()),
     }
 }
 
@@ -60,7 +66,7 @@ async fn view_posts(app_state: State<Arc<AppState>>) -> impl IntoResponse {
 
     match query {
         Ok(posts) => Html(web_templates::Posts { posts: &posts }.render().unwrap()),
-        Err(_error) => todo!(),
+        Err(error) => Html(web_templates::Error { error: &error }.render().unwrap()),
     }
 }
 
@@ -90,7 +96,7 @@ async fn post_new_post(
 
     match query {
         Ok(new_post) => Redirect::to(format!("/post/{}", new_post.slug).as_str()).into_response(),
-        Err(_error) => todo!(),
+        Err(error) => Html(web_templates::Error { error: &error }.render().unwrap()).into_response(),
     }
 }
 
@@ -109,9 +115,12 @@ async fn edit_post(app_state: State<Arc<AppState>>, Path(slug): Path<String>) ->
                 .render()
                 .unwrap(),
             ),
-            None => todo!(),
+            None => Html(
+                web_templates::NotFound {
+                    error: &format!("Post \"{slug}\" not found"),
+                }.render().unwrap()),
         },
-        Err(_error) => todo!(),
+        Err(error) => Html(web_templates::Error { error: &error }.render().unwrap()),
     }
 }
 
@@ -134,7 +143,7 @@ async fn post_edit_post(
     // TODO-TODO: Post content validation.
     match query {
         Ok(new_post) => Redirect::to(format!("/post/{}", new_post.slug).as_str()).into_response(),
-        Err(_error) => todo!(),
+        Err(error) => Html(web_templates::Error { error: &error }.render().unwrap()).into_response(),
     }
 }
 
@@ -150,7 +159,7 @@ async fn delete_post(
 
     match query {
         Ok(_) => Redirect::to("/posts").into_response(),
-        Err(_error) => todo!(),
+        Err(error) => Html(web_templates::Error { error: &error }.render().unwrap()).into_response(),
     }
 }
 
@@ -169,6 +178,6 @@ async fn publish_post(
 
     match query {
         Ok(_) => Redirect::to("/posts").into_response(),
-        Err(_error) => todo!(),
+        Err(error) => Html(web_templates::Error { error: &error }.render().unwrap()).into_response(),
     }
 }
